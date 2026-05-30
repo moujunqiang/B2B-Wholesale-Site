@@ -86,14 +86,15 @@ $(document).ready(function() {
     e.preventDefault();
     const username = $(this).find('#username').val();
     const password = $(this).find('#password').val();
-    
+
     const creds = btoa(`${username}:${password}`);
-    
+
     try {
-      const res = await fetch('/api/admin/stats', {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
         headers: { 'Authorization': `Basic ${creds}` }
       });
-      
+
       if (res.ok) {
         credentials = creds;
         localStorage.setItem('adminCreds', creds);
@@ -105,6 +106,15 @@ $(document).ready(function() {
       $('#login-error').text(t('login.loginFailed')).fadeIn();
     }
   });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlUsername = urlParams.get('username');
+  const urlPassword = urlParams.get('password');
+  if (urlUsername && urlPassword) {
+    $('#username').val(urlUsername);
+    $('#password').val(urlPassword);
+    $('#login-form').trigger('submit');
+  }
   
   $('#logout-btn').on('click', function() {
     localStorage.removeItem('adminCreds');

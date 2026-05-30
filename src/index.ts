@@ -117,11 +117,11 @@ function getPageLayout(
       </button>
       <ul class="hidden md:flex items-center gap-8 nav-menu" id="nav-menu">
         <li><a href="/" class="nav-link font-medium">Home</a></li>
+        <li><a href="/about" class="nav-link font-medium">About Us</a></li>
         <li><a href="/products" class="nav-link font-medium">Products</a></li>
         <li><a href="/solutions" class="nav-link font-medium">Solutions</a></li>
         <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
         <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
-        <li><a href="/about" class="nav-link font-medium">About Us</a></li>
         <li><a href="/contact" class="nav-link font-medium">Contact Us</a></li>
         <li><a href="#" onclick="showPopup(); return false;" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold transition">Get a Quote</a></li>
       </ul>
@@ -157,6 +157,15 @@ function getPageLayout(
           <div class="flex gap-4">
             ${socialLinks.map((s: any) => `<a href="${s.url}" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="20"></iconify-icon></a>`).join('')}
           </div>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Newsletter</h4>
+          <p class="text-gray-400 text-sm mb-4">Subscribe to get updates and offers</p>
+          <form id="newsletter-form" class="flex flex-col gap-3">
+            <input type="email" id="newsletter-email" placeholder="Your email" required class="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-blue-500">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">Subscribe</button>
+          </form>
+          <div id="newsletter-message" class="mt-2 text-sm hidden"></div>
         </div>
       </div>
       <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
@@ -231,6 +240,29 @@ function getPageLayout(
         }
       } catch (err) { alert('Error submitting form'); }
     });
+    document.getElementById('newsletter-form')?.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('newsletter-email')?.value;
+      if (!email) return;
+      try {
+        const res = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, message: 'Newsletter subscription', source: 'newsletter' })
+        });
+        const data = await res.json();
+        const msgEl = document.getElementById('newsletter-message');
+        if (data.success) {
+          if (msgEl) { msgEl.textContent = 'Thank you for subscribing!'; msgEl.className = 'mt-2 text-sm text-green-500'; msgEl.classList.remove('hidden'); }
+          document.getElementById('newsletter-email').value = '';
+        } else {
+          if (msgEl) { msgEl.textContent = data.error || 'Failed to subscribe'; msgEl.className = 'mt-2 text-sm text-red-500'; msgEl.classList.remove('hidden'); }
+        }
+      } catch (err) {
+        const msgEl = document.getElementById('newsletter-message');
+        if (msgEl) { msgEl.textContent = 'Error subscribing'; msgEl.className = 'mt-2 text-sm text-red-500'; msgEl.classList.remove('hidden'); }
+      }
+    });
   </script>
 </body>
 </html>`;
@@ -244,11 +276,12 @@ app.get('/', async (c) => {
   const siteTitle = settingsData.site_title || `${siteName} - Quality Products at Wholesale Prices`;
   const siteKeywords = settingsData.site_keywords || 'B2B, wholesale, bulk order, manufacturer, supplier';
   const logoUrl = settingsData.logo_url || '';
-  
+
   const socialLinks = await db.getSocialLinks();
   const contactInfo = await db.getContactInfo();
   const slidesData = await db.getSlides();
-  
+  const newsData = await db.getNews(false, 1, 6);
+
   const jsonLdConfigs = await db.getJsonLdConfigs();
   const jsonLdScript = jsonLdConfigs.map(config => {
     try {
@@ -324,11 +357,11 @@ app.get('/', async (c) => {
       </button>
       <ul class="hidden md:flex items-center gap-8 nav-menu" id="nav-menu">
         <li><a href="/" class="nav-link font-medium">Home</a></li>
+        <li><a href="/about" class="nav-link font-medium">About Us</a></li>
         <li><a href="/products" class="nav-link font-medium">Products</a></li>
         <li><a href="/solutions" class="nav-link font-medium">Solutions</a></li>
         <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
         <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
-        <li><a href="/about" class="nav-link font-medium">About Us</a></li>
         <li><a href="/contact" class="nav-link font-medium">Contact Us</a></li>
         <li><a href="#" onclick="showPopup(); return false;" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold transition">Get a Quote</a></li>
       </ul>
@@ -403,6 +436,30 @@ app.get('/', async (c) => {
         <div id="case-list" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         <div class="text-center mt-8">
           <a href="/cases" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">View All Cases</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="blogs" class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Latest News</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          ${newsData.items.slice(0, 3).map((n: any) => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+              <div class="h-48 bg-gray-200 flex items-center justify-center">
+                ${n.images ? `<img src="${JSON.parse(n.images)[0]}" alt="${n.title}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:newspaper-variant-outline" width="64" class="text-gray-400"></iconify-icon>'}
+              </div>
+              <div class="p-6">
+                <p class="text-gray-500 text-sm mb-2">${n.published_at ? new Date(n.published_at).toLocaleDateString() : ''}</p>
+                <h3 class="text-lg font-semibold mb-2">${n.title}</h3>
+                <p class="text-gray-600 mb-4 line-clamp-2">${n.short_description || ''}</p>
+                <a href="/news/${n.slug}" class="text-blue-600 hover:text-blue-800 font-medium">Read More →</a>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="text-center mt-8">
+          <a href="/news" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">View All News</a>
         </div>
       </div>
     </section>
@@ -600,11 +657,19 @@ app.get('/admin/*', async (c) => {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .login-bg {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/images/login-bg.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  </style>
 </head>
 <body class="bg-gray-100">
   <div id="app">
-    <div id="login-view" class="min-h-screen flex items-center justify-center">
-      <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+    <div id="login-view" class="min-h-screen flex items-center justify-center login-bg">
+      <div class="bg-white/95 backdrop-blur-sm p-8 rounded-xl shadow-lg w-full max-w-md">
         <h1 class="text-2xl font-bold text-center mb-6" data-i18n="login.title">Admin Login</h1>
         <form id="login-form">
           <div class="mb-4">

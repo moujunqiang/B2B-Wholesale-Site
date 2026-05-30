@@ -4,6 +4,27 @@ import { Database } from '../db';
 
 const admin = new Hono<{ Bindings: Env }>();
 
+admin.post('/login', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return c.json({ success: false, error: 'Unauthorized' }, 401);
+  }
+  const credentials = atob(authHeader.slice(6)).split(':');
+  if (credentials.length !== 2) {
+    return c.json({ success: false, error: 'Invalid credentials' }, 401);
+  }
+  const [username, password] = credentials;
+  const adminUsername = c.env.ADMIN_USERNAME;
+  const adminPassword = c.env.ADMIN_PASSWORD;
+  if (!adminUsername || !adminPassword) {
+    return c.json({ success: false, error: 'Admin not configured' }, 500);
+  }
+  if (username !== adminUsername || password !== adminPassword) {
+    return c.json({ success: false, error: 'Invalid credentials' }, 401);
+  }
+  return c.json({ success: true, data: { username: adminUsername } });
+});
+
 admin.post('/products', async (c) => {
   const db = new Database(c.env.DB);
   const body = await c.req.json();
