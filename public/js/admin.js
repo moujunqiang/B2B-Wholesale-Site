@@ -1,71 +1,64 @@
 let currentPage = 'dashboard';
 let credentials = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+$(document).ready(function() {
   const savedCreds = localStorage.getItem('adminCreds');
   if (savedCreds) {
     credentials = savedCreds;
     showAdminView();
   }
-});
-
-document.getElementById('login-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const username = form.username.value;
-  const password = form.password.value;
   
-  const creds = btoa(`${username}:${password}`);
-  
-  try {
-    const res = await fetch('/api/admin/stats', {
-      headers: { 'Authorization': `Basic ${creds}` }
-    });
-    
-    if (res.ok) {
-      credentials = creds;
-      localStorage.setItem('adminCreds', creds);
-      showAdminView();
-    } else {
-      const error = document.getElementById('login-error');
-      error.textContent = 'Invalid username or password';
-      error.style.display = 'block';
-    }
-  } catch (err) {
-    const error = document.getElementById('login-error');
-    error.textContent = 'Login failed. Please try again.';
-    error.style.display = 'block';
-  }
-});
-
-document.getElementById('logout-btn')?.addEventListener('click', () => {
-  localStorage.removeItem('adminCreds');
-  credentials = null;
-  location.reload();
-});
-
-document.querySelectorAll('.admin-nav .nav-item').forEach(item => {
-  item.addEventListener('click', (e) => {
+  $('#login-form').on('submit', async function(e) {
     e.preventDefault();
-    const page = e.target.getAttribute('href').slice(1);
+    const username = $(this).find('#username').val();
+    const password = $(this).find('#password').val();
+    
+    const creds = btoa(`${username}:${password}`);
+    
+    try {
+      const res = await fetch('/api/admin/stats', {
+        headers: { 'Authorization': `Basic ${creds}` }
+      });
+      
+      if (res.ok) {
+        credentials = creds;
+        localStorage.setItem('adminCreds', creds);
+        showAdminView();
+      } else {
+        $('#login-error').text('Invalid username or password').fadeIn();
+      }
+    } catch (err) {
+      $('#login-error').text('Login failed. Please try again.').fadeIn();
+    }
+  });
+  
+  $('#logout-btn').on('click', function() {
+    localStorage.removeItem('adminCreds');
+    credentials = null;
+    location.reload();
+  });
+  
+  $('.admin-nav .nav-item').on('click', function(e) {
+    e.preventDefault();
+    const page = $(this).attr('href').slice(1);
     switchPage(page);
   });
 });
 
 function showAdminView() {
-  document.getElementById('login-view').style.display = 'none';
-  document.getElementById('admin-view').style.display = 'flex';
+  $('#login-view').hide();
+  $('#admin-view').removeClass('hidden').addClass('flex');
   loadDashboard();
 }
 
 function switchPage(page) {
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  $('.nav-item').removeClass('active');
+  $('.page').removeClass('active').addClass('hidden');
   
-  document.querySelector(`.nav-item[href="#${page}"]`)?.classList.add('active');
-  document.getElementById(`${page}-page`)?.classList.add('active');
+  $(`.nav-item[href="#${page}"]`).addClass('active');
+  $(`#${page}-page`).removeClass('hidden').addClass('active');
   
-  document.getElementById('page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+  $('#page-title').text(page.charAt(0).toUpperCase() + page.slice(1));
   currentPage = page;
   
   if (page === 'products') loadProducts();
@@ -86,12 +79,12 @@ async function loadDashboard() {
     });
     const data = await res.json();
     if (data.success) {
-      document.getElementById('stat-products').textContent = data.data.totalProducts;
-      document.getElementById('stat-inquiries').textContent = data.data.totalInquiries;
-      document.getElementById('stat-pending').textContent = data.data.pendingInquiries;
-      document.getElementById('stat-leads').textContent = data.data.totalLeads;
-      document.getElementById('stat-cases').textContent = data.data.totalCases;
-      document.getElementById('stat-news').textContent = data.data.totalNews;
+      $('#stat-products').text(data.data.totalProducts);
+      $('#stat-inquiries').text(data.data.totalInquiries);
+      $('#stat-pending').text(data.data.pendingInquiries);
+      $('#stat-leads').text(data.data.totalLeads);
+      $('#stat-cases').text(data.data.totalCases);
+      $('#stat-news').text(data.data.totalNews);
     }
   } catch (err) {
     console.error('Failed to load dashboard');
