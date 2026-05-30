@@ -1,0 +1,121 @@
+import { Hono } from 'hono';
+import type { Env } from '../types';
+import { Database } from '../db';
+
+const admin = new Hono<{ Bindings: Env }>();
+
+admin.post('/products', async (c) => {
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const id = await db.createProduct({ ...body, slug });
+  return c.json({ success: true, data: { id }, message: 'Product created' }, 201);
+});
+
+admin.put('/products/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  const updated = await db.updateProduct(id, body);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'Product updated' });
+});
+
+admin.delete('/products/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const deleted = await db.deleteProduct(id);
+  if (!deleted) {
+    return c.json({ success: false, error: 'Failed to delete' }, 500);
+  }
+  return c.json({ success: true, message: 'Product deleted' });
+});
+
+admin.post('/categories', async (c) => {
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const id = await db.createCategory({ ...body, slug });
+  return c.json({ success: true, data: { id }, message: 'Category created' }, 201);
+});
+
+admin.put('/categories/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  const updated = await db.updateCategory(id, body);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'Category updated' });
+});
+
+admin.delete('/categories/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const deleted = await db.deleteCategory(id);
+  if (!deleted) {
+    return c.json({ success: false, error: 'Failed to delete' }, 500);
+  }
+  return c.json({ success: true, message: 'Category deleted' });
+});
+
+admin.get('/inquiries', async (c) => {
+  const db = new Database(c.env.DB);
+  const status = c.req.query('status') || undefined;
+  const page = parseInt(c.req.query('page') || '1');
+  const pageSize = parseInt(c.req.query('limit') || '20');
+  const result = await db.getInquiries(status, page, pageSize);
+  return c.json({
+    success: true,
+    data: {
+      items: result.items,
+      total: result.total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(result.total / pageSize)
+    }
+  });
+});
+
+admin.get('/inquiries/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const inquiry = await db.getInquiryById(id);
+  if (!inquiry) {
+    return c.json({ success: false, error: 'Inquiry not found' }, 404);
+  }
+  return c.json({ success: true, data: inquiry });
+});
+
+admin.patch('/inquiries/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const { status, notes } = await c.req.json();
+  const updated = await db.updateInquiryStatus(id, status, notes);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'Inquiry updated' });
+});
+
+admin.get('/stats', async (c) => {
+  const db = new Database(c.env.DB);
+  const [products, inquiries, pending] = await Promise.all([
+    db.getProducts(1, 1),
+    db.getInquiries(undefined, 1, 1),
+    db.getInquiries('pending', 1, 1)
+  ]);
+  return c.json({
+    success: true,
+    data: {
+      totalProducts: products.total,
+      totalInquiries: inquiries.total,
+      pendingInquiries: pending.total
+    }
+  });
+});
+
+export default admin;
