@@ -128,10 +128,7 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 4. 点击 **Create**
 5. 在 Worker 页面，点击 **Settings** > **Git** > **Connect GitHub**
 6. 选择你 Fork 的仓库
-7. 配置构建设置：
-   - **Build command**: （留空）
-   - **Build output directory**: （留空）
-   - **Root directory**: （留空）
+7. **无需配置构建命令** - Cloudflare Workers 原生支持 TypeScript，会自动处理
 
 ### 5. 配置 Worker 绑定
 
@@ -370,6 +367,8 @@ npm run dev
 # TypeScript 类型检查
 npm run typecheck
 ```
+
+> **提示**：Workers 原生支持 TypeScript，无需额外的构建步骤。
 
 ---
 
