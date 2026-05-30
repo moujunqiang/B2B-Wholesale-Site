@@ -479,23 +479,14 @@ npm run typecheck
 
 #### 4. 静态文件 404（/js/admin.js 等）
 
-使用 Git 自动部署时，确保：
-
-1. wrangler.toml 包含 `[site]` 配置：
+确保 wrangler.toml 包含 `[site]` 配置：
 
 ```toml
 [site]
 bucket = "./public"
 ```
 
-2. 在 Worker 设置中添加 **Assets 绑定**：
-
-| 变量名 | 值 |
-|--------|-----|
-| 名称 | `ASSETS` |
-| 类型 | **Assets** |
-
-3. 静态文件通过代码中的路由处理器提供支持
+Cloudflare Workers Sites 会自动从 public 目录提供静态文件，无需额外配置。
 
 #### 5. 后台无法登录
 

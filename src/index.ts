@@ -30,50 +30,6 @@ app.use('/api/*', cors());
 app.use('/api/admin/*', authMiddleware);
 app.use('/api/upload/*', authMiddleware);
 
-app.get('/js/:file', async (c) => {
-  const file = c.req.param('file');
-  const res = await c.env.ASSETS.fetch(`/js/${file}`);
-  if (res.status === 200) {
-    return new Response(res.body, {
-      headers: { 'Content-Type': 'application/javascript', 'Cache-Control': 'public, max-age=86400' },
-    });
-  }
-  return c.text('Not Found', 404);
-});
-
-app.get('/css/:file', async (c) => {
-  const file = c.req.param('file');
-  const res = await c.env.ASSETS.fetch(`/css/${file}`);
-  if (res.status === 200) {
-    return new Response(res.body, {
-      headers: { 'Content-Type': 'text/css', 'Cache-Control': 'public, max-age=86400' },
-    });
-  }
-  return c.text('Not Found', 404);
-});
-
-app.get('/images/:file', async (c) => {
-  const file = c.req.param('file');
-  const res = await c.env.ASSETS.fetch(`/images/${file}`);
-  if (res.status === 200) {
-    const contentType = file.endsWith('.png') ? 'image/png' : file.endsWith('.jpg') || file.endsWith('.jpeg') ? 'image/jpeg' : 'image/gif';
-    return new Response(res.body, {
-      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' },
-    });
-  }
-  return c.text('Not Found', 404);
-});
-
-app.get('/favicon.ico', async (c) => {
-  const res = await c.env.ASSETS.fetch('/favicon.ico');
-  if (res.status === 200) {
-    return new Response(res.body, {
-      headers: { 'Content-Type': 'image/x-icon', 'Cache-Control': 'public, max-age=86400' },
-    });
-  }
-  return c.text('Not Found', 404);
-});
-
 function getIconifyIcon(platform: string): string {
   const icons: { [key: string]: string } = {
     'facebook': 'fa6-brands:facebook',
