@@ -286,3 +286,62 @@ CREATE INDEX IF NOT EXISTS idx_cases_featured ON cases(is_featured);
 CREATE INDEX IF NOT EXISTS idx_news_published ON news(published_at);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_contact_info_type ON contact_info(type);
+
+-- 幻灯片表
+CREATE TABLE IF NOT EXISTS slides (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  description TEXT,
+  image_url TEXT,
+  link_url TEXT,
+  link_text TEXT,
+  is_active INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- JSON-LD 结构化数据表
+CREATE TABLE IF NOT EXISTS json_ld_configs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  page_type TEXT NOT NULL,
+  name TEXT,
+  description TEXT,
+  url TEXT,
+  logo TEXT,
+  same_as TEXT,
+  contact_point TEXT,
+  extra_data TEXT,
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Robots 配置表
+CREATE TABLE IF NOT EXISTS robots_configs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_agent TEXT NOT NULL,
+  allow_paths TEXT,
+  disallow_paths TEXT,
+  sitemap_url TEXT,
+  is_active INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 默认幻灯片
+INSERT INTO slides (title, subtitle, description, image_url, link_url, link_text, sort_order) VALUES
+  ('Quality Products', 'Wholesale Prices', 'Find the best products at competitive prices', '/images/slide1.jpg', '/products', 'Browse Products', 1),
+  ('Global Shipping', 'Fast & Reliable', 'We ship to over 100 countries worldwide', '/images/slide2.jpg', '/contact', 'Contact Us', 2),
+  ('24/7 Support', 'Always Here for You', 'Our team is ready to assist you anytime', '/images/slide3.jpg', '/contact', 'Get Support', 3);
+
+-- 默认 JSON-LD 配置
+INSERT INTO json_ld_configs (page_type, name, description, url, extra_data) VALUES
+  ('organization', 'B2B Wholesale', 'Your trusted B2B wholesale platform', 'https://b2bwholesale.com', '{"@type": "Organization", "contactPoint": {"@type": "ContactPoint", "telephone": "+1-234-567-8900", "contactType": "customer service"}}'),
+  ('web_site', 'B2B Wholesale', 'B2B Wholesale Platform', 'https://b2bwholesale.com', '{"potentialAction": {"@type": "SearchAction", "target": "https://b2bwholesale.com/search?q={search_term_string}", "query-input": "required name=search_term_string"}}');
+
+-- 默认 Robots 配置
+INSERT INTO robots_configs (user_agent, disallow_paths, sitemap_url, sort_order) VALUES
+  ('*', '/admin/private,/api', 'https://b2bwholesale.com/sitemap.xml', 1);
