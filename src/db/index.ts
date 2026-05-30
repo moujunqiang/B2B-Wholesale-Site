@@ -385,13 +385,482 @@ class Database {
     return result.success;
   }
 
-  async getAdminByUsername(username: string): Promise<Admin | null> {
+  async getAdminByUsername(username: string): Promise<any> {
     const result = await this.db.prepare('SELECT * FROM admins WHERE username = ?').bind(username).first();
     return result as any;
   }
 
   async updateAdminLastLogin(id: number): Promise<boolean> {
     const result = await this.db.prepare('UPDATE admins SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getStats(): Promise<any> {
+    const productsCount = await this.db.prepare('SELECT COUNT(*) as count FROM products WHERE is_active = 1').first() as any;
+    const inquiriesCount = await this.db.prepare('SELECT COUNT(*) as count FROM inquiries').first() as any;
+    const pendingInquiries = await this.db.prepare("SELECT COUNT(*) as count FROM inquiries WHERE status = 'pending'").first() as any;
+    const leadsCount = await this.db.prepare('SELECT COUNT(*) as count FROM leads').first() as any;
+    const casesCount = await this.db.prepare('SELECT COUNT(*) as count FROM cases WHERE is_active = 1').first() as any;
+    const newsCount = await this.db.prepare('SELECT COUNT(*) as count FROM news WHERE is_active = 1').first() as any;
+    
+    return {
+      totalProducts: productsCount?.count || 0,
+      totalInquiries: inquiriesCount?.count || 0,
+      pendingInquiries: pendingInquiries?.count || 0,
+      totalLeads: leadsCount?.count || 0,
+      totalCases: casesCount?.count || 0,
+      totalNews: newsCount?.count || 0,
+    };
+  }
+
+  async getPages(): Promise<any[]> {
+    const result = await this.db.prepare('SELECT * FROM pages WHERE is_active = 1 ORDER BY id ASC').all();
+    return result.results as any;
+  }
+
+  async getPageBySlug(slug: string): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM pages WHERE slug = ? AND is_active = 1').bind(slug).first();
+    return result as any;
+  }
+
+  async createPage(page: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO pages (title, slug, content, meta_title, meta_description, meta_keywords, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      page.title,
+      page.slug,
+      page.content || null,
+      page.meta_title || null,
+      page.meta_description || null,
+      page.meta_keywords || null,
+      page.is_active !== undefined ? page.is_active : 1
+    ).run();
+    
+    this.invalidateCache('pages');
+    return result.meta!.last_row_id as number;
+  }
+
+  async updatePage(id: number, page: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (page.title !== undefined) { updates.push('title = ?'); params.push(page.title); }
+    if (page.slug !== undefined) { updates.push('slug = ?'); params.push(page.slug); }
+    if (page.content !== undefined) { updates.push('content = ?'); params.push(page.content); }
+    if (page.meta_title !== undefined) { updates.push('meta_title = ?'); params.push(page.meta_title); }
+    if (page.meta_description !== undefined) { updates.push('meta_description = ?'); params.push(page.meta_description); }
+    if (page.meta_keywords !== undefined) { updates.push('meta_keywords = ?'); params.push(page.meta_keywords); }
+    if (page.is_active !== undefined) { updates.push('is_active = ?'); params.push(page.is_active); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    
+    const result = await this.db.prepare(`UPDATE pages SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    this.invalidateCache('pages');
+    return result.success;
+  }
+
+  async deletePage(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM pages WHERE id = ?').bind(id).run();
+    this.invalidateCache('pages');
+    return result.success;
+  }
+
+  async getSolutions(featured?: boolean): Promise<any[]> {
+    let query = 'SELECT * FROM solutions WHERE is_active = 1';
+    const params: any[] = [];
+    
+    if (featured !== undefined) {
+      query += ' AND is_featured = ?';
+      params.push(featured ? 1 : 0);
+    }
+    
+    query += ' ORDER BY sort_order ASC, id ASC';
+    const result = await this.db.prepare(query).bind(...params).all();
+    return result.results as any;
+  }
+
+  async getSolutionBySlug(slug: string): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM solutions WHERE slug = ? AND is_active = 1').bind(slug).first();
+    return result as any;
+  }
+
+  async createSolution(solution: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO solutions (title, slug, short_description, content, images, industries, is_featured, is_active, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      solution.title,
+      solution.slug,
+      solution.short_description || null,
+      solution.content || null,
+      solution.images || null,
+      solution.industries || null,
+      solution.is_featured !== undefined ? solution.is_featured : 0,
+      solution.is_active !== undefined ? solution.is_active : 1,
+      solution.sort_order || 0
+    ).run();
+    
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateSolution(id: number, solution: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (solution.title !== undefined) { updates.push('title = ?'); params.push(solution.title); }
+    if (solution.slug !== undefined) { updates.push('slug = ?'); params.push(solution.slug); }
+    if (solution.short_description !== undefined) { updates.push('short_description = ?'); params.push(solution.short_description); }
+    if (solution.content !== undefined) { updates.push('content = ?'); params.push(solution.content); }
+    if (solution.images !== undefined) { updates.push('images = ?'); params.push(solution.images); }
+    if (solution.industries !== undefined) { updates.push('industries = ?'); params.push(solution.industries); }
+    if (solution.is_featured !== undefined) { updates.push('is_featured = ?'); params.push(solution.is_featured); }
+    if (solution.is_active !== undefined) { updates.push('is_active = ?'); params.push(solution.is_active); }
+    if (solution.sort_order !== undefined) { updates.push('sort_order = ?'); params.push(solution.sort_order); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    
+    const result = await this.db.prepare(`UPDATE solutions SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteSolution(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM solutions WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getCases(featured?: boolean): Promise<any[]> {
+    let query = 'SELECT * FROM cases WHERE is_active = 1';
+    const params: any[] = [];
+    
+    if (featured !== undefined) {
+      query += ' AND is_featured = ?';
+      params.push(featured ? 1 : 0);
+    }
+    
+    query += ' ORDER BY sort_order ASC, id ASC';
+    const result = await this.db.prepare(query).bind(...params).all();
+    return result.results as any;
+  }
+
+  async getCaseBySlug(slug: string): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM cases WHERE slug = ? AND is_active = 1').bind(slug).first();
+    return result as any;
+  }
+
+  async createCase(item: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO cases (title, slug, client_name, industry, challenge, solution, results, images, testimonial, is_featured, is_active, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      item.title,
+      item.slug,
+      item.client_name || null,
+      item.industry || null,
+      item.challenge || null,
+      item.solution || null,
+      item.results || null,
+      item.images || null,
+      item.testimonial || null,
+      item.is_featured !== undefined ? item.is_featured : 0,
+      item.is_active !== undefined ? item.is_active : 1,
+      item.sort_order || 0
+    ).run();
+    
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateCase(id: number, item: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (item.title !== undefined) { updates.push('title = ?'); params.push(item.title); }
+    if (item.slug !== undefined) { updates.push('slug = ?'); params.push(item.slug); }
+    if (item.client_name !== undefined) { updates.push('client_name = ?'); params.push(item.client_name); }
+    if (item.industry !== undefined) { updates.push('industry = ?'); params.push(item.industry); }
+    if (item.challenge !== undefined) { updates.push('challenge = ?'); params.push(item.challenge); }
+    if (item.solution !== undefined) { updates.push('solution = ?'); params.push(item.solution); }
+    if (item.results !== undefined) { updates.push('results = ?'); params.push(item.results); }
+    if (item.images !== undefined) { updates.push('images = ?'); params.push(item.images); }
+    if (item.testimonial !== undefined) { updates.push('testimonial = ?'); params.push(item.testimonial); }
+    if (item.is_featured !== undefined) { updates.push('is_featured = ?'); params.push(item.is_featured); }
+    if (item.is_active !== undefined) { updates.push('is_active = ?'); params.push(item.is_active); }
+    if (item.sort_order !== undefined) { updates.push('sort_order = ?'); params.push(item.sort_order); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    
+    const result = await this.db.prepare(`UPDATE cases SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteCase(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM cases WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getNews(featured?: boolean, page = 1, pageSize = 10): Promise<{ items: any[]; total: number }> {
+    let query = 'SELECT * FROM news WHERE is_active = 1';
+    const params: any[] = [];
+    
+    if (featured !== undefined) {
+      query += ' AND is_featured = ?';
+      params.push(featured ? 1 : 0);
+    }
+    
+    const countResult = await this.db.prepare(`SELECT COUNT(*) as total FROM news WHERE is_active = 1 ${featured !== undefined ? 'AND is_featured = ?' : ''}`).bind(...(featured !== undefined ? [featured ? 1 : 0] : [])).first() as any;
+    const total = countResult?.total || 0;
+    
+    query += ' ORDER BY published_at DESC, id DESC LIMIT ? OFFSET ?';
+    const offset = (page - 1) * pageSize;
+    
+    const result = await this.db.prepare(query).bind(...params, pageSize, offset).all();
+    return { items: result.results as any, total };
+  }
+
+  async getNewsBySlug(slug: string): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM news WHERE slug = ? AND is_active = 1').bind(slug).first();
+    
+    if (result) {
+      await this.db.prepare('UPDATE news SET view_count = view_count + 1 WHERE id = ?').bind((result as any).id).run();
+    }
+    
+    return result as any;
+  }
+
+  async createNews(item: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO news (title, slug, short_description, content, images, author, is_featured, is_active, published_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      item.title,
+      item.slug,
+      item.short_description || null,
+      item.content || null,
+      item.images || null,
+      item.author || null,
+      item.is_featured !== undefined ? item.is_featured : 0,
+      item.is_active !== undefined ? item.is_active : 1,
+      item.published_at || new Date().toISOString()
+    ).run();
+    
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateNews(id: number, item: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (item.title !== undefined) { updates.push('title = ?'); params.push(item.title); }
+    if (item.slug !== undefined) { updates.push('slug = ?'); params.push(item.slug); }
+    if (item.short_description !== undefined) { updates.push('short_description = ?'); params.push(item.short_description); }
+    if (item.content !== undefined) { updates.push('content = ?'); params.push(item.content); }
+    if (item.images !== undefined) { updates.push('images = ?'); params.push(item.images); }
+    if (item.author !== undefined) { updates.push('author = ?'); params.push(item.author); }
+    if (item.is_featured !== undefined) { updates.push('is_featured = ?'); params.push(item.is_featured); }
+    if (item.is_active !== undefined) { updates.push('is_active = ?'); params.push(item.is_active); }
+    if (item.published_at !== undefined) { updates.push('published_at = ?'); params.push(item.published_at); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    
+    const result = await this.db.prepare(`UPDATE news SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteNews(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM news WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getLeads(status?: string, page = 1, pageSize = 20): Promise<{ items: any[]; total: number }> {
+    let whereClause = '';
+    const params: any[] = [];
+    
+    if (status) {
+      whereClause = 'WHERE status = ?';
+      params.push(status);
+    }
+    
+    const countResult = await this.db.prepare(`SELECT COUNT(*) as total FROM leads ${whereClause}`).bind(...params).first() as any;
+    const total = countResult?.total || 0;
+    const offset = (page - 1) * pageSize;
+    
+    const result = await this.db.prepare(`
+      SELECT * FROM leads ${whereClause}
+      ORDER BY created_at DESC LIMIT ? OFFSET ?
+    `).bind(...params, pageSize, offset).all();
+    
+    return { items: result.results as any, total };
+  }
+
+  async getLeadById(id: number): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM leads WHERE id = ?').bind(id).first();
+    return result as any;
+  }
+
+  async createLead(lead: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO leads (name, phone, whatsapp, email, message, source, product_id, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      lead.name,
+      lead.phone || null,
+      lead.whatsapp || null,
+      lead.email || null,
+      lead.message,
+      lead.source || 'popup',
+      lead.product_id || null,
+      lead.status || 'new'
+    ).run();
+    
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateLeadStatus(id: number, status: string, notes?: string): Promise<boolean> {
+    const result = await this.db.prepare(`
+      UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).bind(status, id).run();
+    return result.success;
+  }
+
+  async deleteLead(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM leads WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getPopupSettings(): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM popup_settings LIMIT 1').first();
+    return result as any;
+  }
+
+  async updatePopupSettings(settings: Partial<any>): Promise<boolean> {
+    const current = await this.getPopupSettings();
+    
+    if (current) {
+      const updates: string[] = [];
+      const params: any[] = [];
+      
+      if (settings.is_enabled !== undefined) { updates.push('is_enabled = ?'); params.push(settings.is_enabled); }
+      if (settings.delay_seconds !== undefined) { updates.push('delay_seconds = ?'); params.push(settings.delay_seconds); }
+      if (settings.show_on_exit !== undefined) { updates.push('show_on_exit = ?'); params.push(settings.show_on_exit); }
+      if (settings.title !== undefined) { updates.push('title = ?'); params.push(settings.title); }
+      if (settings.description !== undefined) { updates.push('description = ?'); params.push(settings.description); }
+      if (settings.form_fields !== undefined) { updates.push('form_fields = ?'); params.push(settings.form_fields); }
+      
+      if (updates.length === 0) return false;
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+      params.push(current.id);
+      
+      const result = await this.db.prepare(`UPDATE popup_settings SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+      return result.success;
+    } else {
+      const result = await this.db.prepare(`
+        INSERT INTO popup_settings (is_enabled, delay_seconds, show_on_exit, title, description, form_fields)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).bind(
+        settings.is_enabled !== undefined ? settings.is_enabled : 1,
+        settings.delay_seconds || 15,
+        settings.show_on_exit !== undefined ? settings.show_on_exit : 0,
+        settings.title || null,
+        settings.description || null,
+        settings.form_fields || null
+      ).run();
+      return result.success;
+    }
+  }
+
+  async getSocialLinks(): Promise<any[]> {
+    const result = await this.db.prepare('SELECT * FROM social_links WHERE is_active = 1 ORDER BY sort_order ASC').all();
+    return result.results as any;
+  }
+
+  async createSocialLink(link: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO social_links (platform, name, url, icon, is_active, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      link.platform,
+      link.name,
+      link.url,
+      link.icon || null,
+      link.is_active !== undefined ? link.is_active : 1,
+      link.sort_order || 0
+    ).run();
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateSocialLink(id: number, link: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (link.platform !== undefined) { updates.push('platform = ?'); params.push(link.platform); }
+    if (link.name !== undefined) { updates.push('name = ?'); params.push(link.name); }
+    if (link.url !== undefined) { updates.push('url = ?'); params.push(link.url); }
+    if (link.icon !== undefined) { updates.push('icon = ?'); params.push(link.icon); }
+    if (link.is_active !== undefined) { updates.push('is_active = ?'); params.push(link.is_active); }
+    if (link.sort_order !== undefined) { updates.push('sort_order = ?'); params.push(link.sort_order); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    
+    const result = await this.db.prepare(`UPDATE social_links SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteSocialLink(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM social_links WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getContactInfo(): Promise<any[]> {
+    const result = await this.db.prepare('SELECT * FROM contact_info WHERE is_active = 1 ORDER BY sort_order ASC').all();
+    return result.results as any;
+  }
+
+  async createContactInfo(info: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO contact_info (type, label, value, icon, is_active, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      info.type,
+      info.label || null,
+      info.value,
+      info.icon || null,
+      info.is_active !== undefined ? info.is_active : 1,
+      info.sort_order || 0
+    ).run();
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateContactInfo(id: number, info: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (info.type !== undefined) { updates.push('type = ?'); params.push(info.type); }
+    if (info.label !== undefined) { updates.push('label = ?'); params.push(info.label); }
+    if (info.value !== undefined) { updates.push('value = ?'); params.push(info.value); }
+    if (info.icon !== undefined) { updates.push('icon = ?'); params.push(info.icon); }
+    if (info.is_active !== undefined) { updates.push('is_active = ?'); params.push(info.is_active); }
+    if (info.sort_order !== undefined) { updates.push('sort_order = ?'); params.push(info.sort_order); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    
+    const result = await this.db.prepare(`UPDATE contact_info SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteContactInfo(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM contact_info WHERE id = ?').bind(id).run();
     return result.success;
   }
 }

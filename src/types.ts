@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database;
   R2_BUCKET: R2Bucket;
+  EMAIL_API_KEY?: string;
+  ADMIN_EMAIL?: string;
 }
 
 export interface Category {
@@ -127,4 +129,116 @@ export interface CategoryCreateRequest {
   parent_id?: number;
   sort_order?: number;
   is_active?: boolean;
+}
+
+export interface Page {
+  id: number;
+  title: string;
+  slug: string;
+  content: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Solution {
+  id: number;
+  title: string;
+  slug: string;
+  short_description: string | null;
+  content: string | null;
+  images: string | null;
+  industries: string | null;
+  is_featured: number;
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Case {
+  id: number;
+  title: string;
+  slug: string;
+  client_name: string | null;
+  industry: string | null;
+  challenge: string | null;
+  solution: string | null;
+  results: string | null;
+  images: string | null;
+  testimonial: string | null;
+  is_featured: number;
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface News {
+  id: number;
+  title: string;
+  slug: string;
+  short_description: string | null;
+  content: string | null;
+  images: string | null;
+  author: string | null;
+  is_featured: number;
+  is_active: number;
+  view_count: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Lead {
+  id: number;
+  name: string;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  message: string;
+  source: string;
+  product_id: number | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PopupSettings {
+  id: number;
+  is_enabled: number;
+  delay_seconds: number;
+  show_on_exit: number;
+  title: string | null;
+  description: string | null;
+  form_fields: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SocialLink {
+  id: number;
+  platform: string;
+  name: string;
+  url: string;
+  icon: string | null;
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContactInfo {
+  id: number;
+  type: string;
+  label: string | null;
+  value: string;
+  icon: string | null;
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
