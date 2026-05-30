@@ -1,7 +1,9 @@
 export interface Env {
   DB: D1Database;
   R2_BUCKET: R2Bucket;
-  ASSETS: { fetch: (key: string) => Promise<Response> };
+  ASSETS: {
+    fetch: (key: string) => Promise<Response>;
+  };
   EMAIL_API_KEY?: string;
   ADMIN_EMAIL?: string;
   ADMIN_USERNAME?: string;

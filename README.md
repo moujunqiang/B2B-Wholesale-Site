@@ -477,11 +477,30 @@ npm run typecheck
 2. 检查 R2 绑定名称是否正确（`MEDIA`）
 3. 查看 Worker 日志排查问题
 
-#### 4. 后台无法登录
+#### 4. 静态文件 404（/js/admin.js 等）
 
-1. 确认已在 D1 中创建管理员账户
-2. 检查密码哈希是否正确
-3. 在 D1 查询界面验证数据：`SELECT * FROM admins`
+使用 Git 自动部署时，确保：
+
+1. wrangler.toml 包含 `[site]` 配置：
+
+```toml
+[site]
+bucket = "./public"
+```
+
+2. 在 Worker 设置中添加 **Assets 绑定**：
+
+| 变量名 | 值 |
+|--------|-----|
+| 名称 | `ASSETS` |
+| 类型 | **Assets** |
+
+3. 静态文件通过代码中的路由处理器提供支持
+
+#### 5. 后台无法登录
+
+1. 确认已在环境变量中配置 ADMIN_USERNAME 和 ADMIN_PASSWORD
+2. 确认 Worker 设置中已添加这两个环境变量
 
 #### 5. 邮件发送失败
 
