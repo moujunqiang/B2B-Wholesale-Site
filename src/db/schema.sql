@@ -345,3 +345,18 @@ INSERT INTO json_ld_configs (page_type, name, description, url, extra_data) VALU
 -- 默认 Robots 配置
 INSERT INTO robots_configs (user_agent, disallow_paths, sitemap_url, sort_order) VALUES
   ('*', '/admin/private,/api', 'https://b2bwholesale.com/sitemap.xml', 1);
+
+-- 多语言翻译配置表
+CREATE TABLE IF NOT EXISTS translation_config (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  api_url TEXT,
+  api_token TEXT,
+  enabled_languages TEXT,
+  is_enabled INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 默认翻译配置
+INSERT INTO translation_config (api_url, api_token, enabled_languages, is_enabled) VALUES
+  ('', '', '["en", "zh"]', 0);

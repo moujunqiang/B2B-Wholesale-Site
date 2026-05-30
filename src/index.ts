@@ -123,6 +123,15 @@ function getPageLayout(
         <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
         <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
         <li><a href="/contact" class="nav-link font-medium">Contact Us</a></li>
+        <li class="relative" id="language-switcher-container" style="display: none;">
+          <button id="language-switcher-btn" class="nav-link font-medium flex items-center gap-1">
+            <iconify-icon icon="mdi:web"></iconify-icon> <span id="current-language">EN</span>
+            <iconify-icon icon="mdi:chevron-down"></iconify-icon>
+          </button>
+          <div id="language-dropdown" class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 hidden">
+            <ul id="language-list" class="py-2"></ul>
+          </div>
+        </li>
         <li><a href="#" onclick="showPopup(); return false;" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold transition">Get a Quote</a></li>
       </ul>
     </nav>
@@ -363,6 +372,15 @@ app.get('/', async (c) => {
         <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
         <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
         <li><a href="/contact" class="nav-link font-medium">Contact Us</a></li>
+        <li class="relative" id="language-switcher-container" style="display: none;">
+          <button id="language-switcher-btn" class="nav-link font-medium flex items-center gap-1">
+            <iconify-icon icon="mdi:web"></iconify-icon> <span id="current-language">EN</span>
+            <iconify-icon icon="mdi:chevron-down"></iconify-icon>
+          </button>
+          <div id="language-dropdown" class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 hidden">
+            <ul id="language-list" class="py-2"></ul>
+          </div>
+        </li>
         <li><a href="#" onclick="showPopup(); return false;" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold transition">Get a Quote</a></li>
       </ul>
     </nav>
@@ -739,6 +757,7 @@ app.get('/admin/*', async (c) => {
           <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.popupSettings">Popup Settings</h2><form id="popup-settings-form"></form>
           <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.socialLinks">Social Links</h2><div id="social-links-form"></div>
           <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.contactInfo">Contact Info</h2><div id="contact-info-form"></div>
+          <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.translationSettings">Translation Settings</h2><div id="translation-settings-form"></div>
         </div>
         <div id="seo-page" class="page hidden"><h2 class="text-xl font-semibold mb-4" data-i18n="seo.title">JSON-LD Configuration</h2><div id="jsonld-form"></div></div>
         <div id="robots-page" class="page hidden"><h2 class="text-xl font-semibold mb-4" data-i18n="robots.title">Robots.txt Configuration</h2><div id="robots-form"></div><button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onclick="previewRobots()" data-i18n="robots.preview">Preview robots.txt</button></div>

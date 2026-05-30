@@ -1,4 +1,48 @@
-$(document).ready(function() {
+$(document).ready(async function() {
+  // Initialize language switcher
+  try {
+    const res = await fetch('/api/translations/config');
+    const data = await res.json();
+    if (data.success && data.data && data.data.is_enabled) {
+      const config = data.data;
+      const languages = config.enabled_languages || [];
+      
+      if (languages.length > 1) {
+        const langNames = {
+          'en': 'English', 'zh': '中文', 'es': 'Español', 'fr': 'Français',
+          'de': 'Deutsch', 'ja': '日本語', 'ko': '한국어', 'ru': 'Русский',
+          'ar': 'العربية', 'pt': 'Português'
+        };
+        
+        const langList = $('#language-list');
+        languages.forEach(code => {
+          langList.append(`
+            <li>
+              <button onclick="switchLanguage('${code}')" class="w-full text-left px-4 py-2 hover:bg-gray-100">
+                ${langNames[code] || code}
+              </button>
+            </li>
+          `);
+        });
+        
+        $('#language-switcher-container').show();
+        window.currentLanguage = languages[0] || 'en';
+        $('#current-language').text(window.currentLanguage.toUpperCase());
+        
+        $('#language-switcher-btn').on('click', function(e) {
+          e.stopPropagation();
+          $('#language-dropdown').toggleClass('hidden');
+        });
+        
+        $(document).on('click', function() {
+          $('#language-dropdown').addClass('hidden');
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load translation config');
+  }
+  
   loadProducts();
   loadSolutions();
   loadCases();
@@ -24,6 +68,37 @@ $(document).ready(function() {
     initSlider();
   }
 });
+
+window.switchLanguage = async function(targetLang) {
+  const currentLang = window.currentLanguage || 'en';
+  
+  try {
+    const res = await fetch('/api/translations/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: 'test',
+        source_locale: currentLang,
+        target_locale: targetLang
+      })
+    });
+    
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.error || '翻译 API 接口错误，请联系管理员配置正确的参数');
+      return;
+    }
+    
+    window.currentLanguage = targetLang;
+    $('#current-language').text(targetLang.toUpperCase());
+    $('#language-dropdown').addClass('hidden');
+    
+    alert('Language switched to ' + targetLang.toUpperCase() + '. Full page translation requires integration with a translation service.');
+  } catch (err) {
+    alert('翻译 API 接口错误，请联系管理员配置正确的参数');
+    console.error('Switch language error:', err);
+  }
+};
 
 let popupShown = false;
 let currentSlide = 0;

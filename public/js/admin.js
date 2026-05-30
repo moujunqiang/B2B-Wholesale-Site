@@ -576,10 +576,14 @@ function renderLeadsTable(leads) {
 }
 
 async function loadSettings() {
-  loadGeneralSettings();
+  const page = document.querySelector(`[data-page="settings"]`);
+  if (!page) return;
+  
+  loadSettingsForm();
   loadPopupSettings();
   loadSocialLinks();
   loadContactInfo();
+  loadTranslationSettings();
 }
 
 async function loadGeneralSettings() {
@@ -987,5 +991,100 @@ window.markLeadContacted = async function(id) {
     loadLeads();
   } catch (err) {
     alert('Failed to update lead status');
+  }
+};
+
+// Translation Settings
+window.loadTranslationSettings = async function() {
+  const container = document.getElementById('translation-settings-form');
+  if (!container) return;
+  
+  try {
+    const res = await fetch('/api/translations/config');
+    const data = await res.json();
+    if (data.success) {
+      const config = data.data || {};
+      const enabledLanguages = config.enabled_languages || [];
+      const allLanguages = [
+        { code: 'en', name: 'English' },
+        { code: 'zh', name: '中文' },
+        { code: 'es', name: 'Español' },
+        { code: 'fr', name: 'Français' },
+        { code: 'de', name: 'Deutsch' },
+        { code: 'ja', name: '日本語' },
+        { code: 'ko', name: '한국어' },
+        { code: 'ru', name: 'Русский' },
+        { code: 'ar', name: 'العربية' },
+        { code: 'pt', name: 'Português' },
+      ];
+      
+      container.innerHTML = `
+        <div class="form-group">
+          <label>Enable Multi-language</label>
+          <select id="translation-enabled" class="form-control">
+            <option value="0" ${!config.is_enabled ? 'selected' : ''}>Disabled</option>
+            <option value="1" ${config.is_enabled ? 'selected' : ''}>Enabled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Translation API URL</label>
+          <input type="text" id="translation-api-url" class="form-control" value="${config.api_url || ''}" placeholder="https://api.translation.com/translate">
+        </div>
+        <div class="form-group">
+          <label>API Token</label>
+          <input type="password" id="translation-api-token" class="form-control" value="${config.api_token || ''}" placeholder="Your API token">
+        </div>
+        <div class="form-group">
+          <label>Enabled Languages</label>
+          <div class="language-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem;">
+            ${allLanguages.map(lang => `
+              <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" value="${lang.code}" ${enabledLanguages.includes(lang.code) ? 'checked' : ''}>
+                <span>${lang.name} (${lang.code})</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="saveTranslationSettings()">Save Translation Settings</button>
+      `;
+    }
+  } catch (err) {
+    console.error('Failed to load translation settings');
+  }
+};
+
+window.saveTranslationSettings = async function() {
+  const enabled = document.getElementById('translation-enabled')?.value === '1';
+  const apiUrl = document.getElementById('translation-api-url')?.value || '';
+  const apiToken = document.getElementById('translation-api-token')?.value || '';
+  
+  const enabledLanguages = [];
+  document.querySelectorAll('.language-grid input[type="checkbox"]:checked').forEach(cb => {
+    enabledLanguages.push(cb.value);
+  });
+  
+  try {
+    const res = await fetch('/api/translations/config', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`
+      },
+      body: JSON.stringify({
+        is_enabled: enabled,
+        api_url: apiUrl,
+        api_token: apiToken,
+        enabled_languages: enabledLanguages,
+      })
+    });
+    
+    const data = await res.json();
+    if (data.success) {
+      alert('Translation settings saved successfully!');
+    } else {
+      alert('Failed to save translation settings: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Failed to save translation settings');
   }
 };

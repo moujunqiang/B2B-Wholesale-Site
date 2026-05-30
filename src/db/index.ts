@@ -1011,6 +1011,48 @@ class Database {
     const result = await this.db.prepare('DELETE FROM robots_configs WHERE id = ?').bind(id).run();
     return result.success;
   }
+
+  async getTranslationConfig(): Promise<any> {
+    const cacheKey = this.getCacheKey('translation_config', []);
+    const cached = this.getFromCache<any>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.db.prepare('SELECT * FROM translation_config LIMIT 1').first();
+    const config = result as any;
+    
+    if (config) {
+      try {
+        config.enabled_languages = JSON.parse(config.enabled_languages || '[]');
+      } catch {
+        config.enabled_languages = [];
+      }
+    }
+    
+    this.setCache(cacheKey, config, CACHE_CONFIG.settings);
+    return config;
+  }
+
+  async updateTranslationConfig(config: {
+    api_url?: string;
+    api_token?: string;
+    enabled_languages?: string;
+    is_enabled?: number;
+  }): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (config.api_url !== undefined) { updates.push('api_url = ?'); params.push(config.api_url); }
+    if (config.api_token !== undefined) { updates.push('api_token = ?'); params.push(config.api_token); }
+    if (config.enabled_languages !== undefined) { updates.push('enabled_languages = ?'); params.push(config.enabled_languages); }
+    if (config.is_enabled !== undefined) { updates.push('is_enabled = ?'); params.push(config.is_enabled); }
+    
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    
+    const result = await this.db.prepare(`UPDATE translation_config SET ${updates.join(', ')} WHERE id = 1`).bind(...params).run();
+    this.invalidateCache('translation_config');
+    return result.success;
+  }
 }
 
 export function createDatabase(db: D1Database): Database {
