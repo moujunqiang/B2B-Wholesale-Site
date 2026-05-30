@@ -132,7 +132,9 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 
 ### 5. 配置 Worker 绑定
 
-在 Worker 页面，点击 **Settings** > **Variables**：
+> **注意**：数据库和存储绑定在 Cloudflare Dashboard 中配置，无需修改 wrangler.toml（本地开发时才需要）。
+
+在 Worker 页面，点击 **Settings** > **Variables** > **Add binding**：
 
 #### 添加 D1 数据库绑定
 
@@ -146,7 +148,7 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 
 | 变量名 | 值 |
 |--------|-----|
-| 名称 | `MEDIA` |
+| 名称 | `R2_BUCKET` |
 | 类型 | **R2 Bucket** |
 | Bucket | `b2b-wholesale-media` |
 
