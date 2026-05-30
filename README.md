@@ -50,56 +50,36 @@
 | **前端** | Tailwind CSS + jQuery + Iconify + Font Awesome |
 | **缓存** | 内存缓存 (In-memory Cache) |
 
-## 快速开始
+## 快速开始（Git 自动部署）
 
-### 1. 准备工作
+### 1. Fork 仓库
 
-#### 安装 Node.js
-确保已安装 Node.js 18.x 或更高版本：
+将本仓库 Fork 到你的 GitHub 账号下：
 
-```bash
-node --version
-# 应该显示 v18.x.x 或更高
+```
+https://github.com/你的用户名/B2B-Wholesale-Site
 ```
 
-#### 安装 Wrangler CLI
-
-```bash
-npm install -g wrangler
-wrangler login
-```
-
-登录后，Wrangler 会打开浏览器让你授权 Cloudflare 账号。
-
-### 2. 创建 Cloudflare 资源
+### 2. 在 Cloudflare 创建资源
 
 #### 创建 D1 数据库
 
-```bash
-wrangler d1 create b2b_wholesale_db
-```
-
-创建成功后，会返回类似以下的输出：
-
-```
-✅ Successfully created DB 'b2b_wholesale_db' (database_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-```
-
-**记录下 `database_id`**，后续需要填入 `wrangler.toml`。
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. 进入 **D1** > **Create Database**
+3. 输入数据库名称：`b2b_wholesale_db`
+4. 点击 **Create**
 
 #### 创建 R2 Bucket
 
-```bash
-wrangler r2 bucket create b2b-wholesale-media
-```
+1. 进入 **R2** > **Create Bucket**
+2. 输入 Bucket 名称：`b2b-wholesale-media`
+3. 点击 **Create Bucket**
 
 #### 配置 R2 CORS
 
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
-2. 进入 **R2** > **b2b-wholesale-media**
-3. 点击 **Settings** > **CORS Policy**
-4. 点击 **Edit CORS Policy**
-5. 添加以下配置：
+1. 进入 **R2** > **b2b-wholesale-media** > **Settings**
+2. 找到 **CORS Policy**，点击 **Edit**
+3. 添加以下配置：
 
 ```json
 [
@@ -114,100 +94,84 @@ wrangler r2 bucket create b2b-wholesale-media
 
 > **注意**：生产环境建议将 `AllowedOrigins` 替换为你的实际域名。
 
-#### 创建 D1 数据库并初始化
+#### 初始化数据库
 
-```bash
-# 本地开发环境创建数据库
-npm run db:create
-```
+1. 进入 **D1** > **b2b_wholesale_db** > **Query**
+2. 复制 `src/db/schema.sql` 文件内容
+3. 粘贴到查询框中执行
 
-### 3. 配置项目
-
-#### 更新 wrangler.toml
-
-编辑 `wrangler.toml`，填入数据库 ID：
-
-```toml
-name = "b2b-wholesale-site"
-main = "src/index.ts"
-compatibility_date = "2024-01-01"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "b2b_wholesale_db"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # 填入你的 database_id
-
-[[r2_buckets]]
-binding = "MEDIA"
-bucket_name = "b2b-wholesale-media"
-```
-
-#### 环境变量（可选）
-
-在 Cloudflare Dashboard 的 Worker 设置中添加：
-
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| `EMAIL_API_KEY` | Mailchannels API Key | `pk_xxxxx` |
-| `ADMIN_EMAIL` | 管理员接收邮件邮箱 | `admin@example.com` |
-| `SITE_URL` | 网站 URL（用于邮件链接） | `https://yourdomain.com` |
-
-> **获取 Mailchannels API Key**：
-> 1. 访问 [Mailchannels](https://app.mailchannels.com/)
-> 2. 注册账号并验证邮箱
-> 3. 创建 API Key
-
-### 4. 初始化数据库
-
-```bash
-# 推送数据库结构到本地
-npm run db:create
-
-# 部署到远程（首次部署前必须执行）
-npm run db:push
-```
-
-### 5. 创建管理员账户
+### 3. 创建管理员账户
 
 #### 生成密码哈希
 
+访问在线 bcrypt 工具（如 https://bcrypt.online/）生成密码哈希，或使用本地 Node.js：
+
 ```bash
-npm run hash:admin
-```
-
-按提示输入密码，会输出类似：
-
-```
-Password hash: $2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+node -e "const bcrypt = require('bcryptjs'); const hash = bcrypt.hashSync('你的密码', 10); console.log(hash);"
 ```
 
 #### 插入管理员数据
 
-```bash
-# 本地
-wrangler d1 execute b2b_wholesale_db --local --command "INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '\$2b\$10\$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', datetime('now'));"
+在 D1 查询界面执行：
 
-# 远程（需要先部署）
-wrangler d1 execute b2b_wholesale_db --remote --command "INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '\$2b\$10\$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', datetime('now'));"
+```sql
+INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', datetime('now'));
 ```
 
-### 6. 本地开发
+将 `$2b$10$...` 替换为上一步生成的哈希值。
 
-```bash
-npm run dev
-```
+### 4. 连接 GitHub 仓库
 
-- 前台：http://localhost:8787/
-- 后台：http://localhost:8787/admin
-- API 测试：http://localhost:8787/api/products
+1. 进入 Cloudflare **Workers & Pages**
+2. 点击 **Create application** > **Create Worker**
+3. 输入 Worker 名称：`b2b-wholesale-site`
+4. 点击 **Create**
+5. 在 Worker 页面，点击 **Settings** > **Git** > **Connect GitHub**
+6. 选择你 Fork 的仓库
+7. 配置构建设置：
+   - **Build command**: （留空）
+   - **Build output directory**: （留空）
+   - **Root directory**: （留空）
 
-### 7. 部署上线
+### 5. 配置 Worker 绑定
 
-```bash
-npm run deploy
-```
+在 Worker 页面，点击 **Settings** > **Variables**：
 
-首次部署可能需要几分钟，之后每次部署大约 10-30 秒。
+#### 添加 D1 数据库绑定
+
+| 变量名 | 值 |
+|--------|-----|
+| 名称 | `DB` |
+| 类型 | **D1 Database** |
+| 数据库 | `b2b_wholesale_db` |
+
+#### 添加 R2 存储绑定
+
+| 变量名 | 值 |
+|--------|-----|
+| 名称 | `MEDIA` |
+| 类型 | **R2 Bucket** |
+| Bucket | `b2b-wholesale-media` |
+
+#### 添加环境变量（可选）
+
+| 变量名 | 值 |
+|--------|-----|
+| `EMAIL_API_KEY` | Mailchannels API Key |
+| `ADMIN_EMAIL` | 管理员邮箱 |
+| `SITE_URL` | 你的网站域名 |
+
+### 6. 自动部署
+
+1. 在 GitHub 上修改代码并提交推送
+2. Cloudflare 会自动触发部署
+3. 等待部署完成（约 1-2 分钟）
+4. 访问 Worker 提供的默认域名测试
+
+### 7. 绑定自定义域名
+
+1. 在 Worker 页面点击 **Triggers** > **Custom Domains**
+2. 添加你的域名（如 `www.yourdomain.com`）
 
 ---
 
@@ -372,24 +336,39 @@ B2B-Wholesale-Site/
 
 ## 常用命令
 
+由于采用 Git 自动部署，代码更新流程如下：
+
 ```bash
-# 本地开发（热重载）
+# 1. 克隆仓库（如首次）
+git clone https://github.com/你的用户名/B2B-Wholesale-Site.git
+cd B2B-Wholesale-Site
+
+# 2. 创建开发分支
+git checkout -b feature/xxx
+
+# 3. 修改代码后提交
+git add .
+git commit -m "描述你的修改"
+
+# 4. 推送到 GitHub，自动触发部署
+git push origin main
+```
+
+---
+
+## 本地开发（可选）
+
+如果需要在本地测试：
+
+```bash
+# 安装依赖
+npm install
+
+# 本地开发
 npm run dev
-
-# 部署到 Cloudflare
-npm run deploy
-
-# 本地创建 D1 数据库
-npm run db:create
-
-# 推送数据库到远程
-npm run db:push
 
 # TypeScript 类型检查
 npm run typecheck
-
-# 生成管理员密码哈希
-npm run hash:admin
 ```
 
 ---
@@ -445,12 +424,10 @@ npm run hash:admin
 
 ### 1. 启用 Cloudflare 缓存
 
-在 `wrangler.toml` 中配置：
+在 Worker 设置中启用 **Cache API**：
 
-```toml
-[[routes]]
-pattern = "/*"
-```
+1. **Workers & Pages** > 你的 Worker > **Settings** > **Caching**
+2. 配置合适的缓存规则
 
 ### 2. 压缩图片
 
@@ -472,42 +449,40 @@ pattern = "/*"
 
 #### 1. 部署失败
 
-```bash
-# 检查 wrangler.toml 配置
-wrangler deployments list
+在 Cloudflare Dashboard 查看部署状态和错误：
 
-# 查看详细错误
-npm run deploy -- --verbose
-```
+1. 进入 **Workers & Pages** > 你的 Worker
+2. 点击 **Deployments** 查看部署历史
+3. 点击具体部署查看错误日志
 
 #### 2. 数据库连接失败
 
-确保 `wrangler.toml` 中的 `database_id` 正确，且已执行 `npm run db:push`。
+1. 确认 D1 绑定已正确配置（名称必须为 `DB`）
+2. 确认数据库已初始化（执行了 schema.sql）
 
 #### 3. 图片上传失败
 
 1. 检查 R2 CORS 配置
-2. 检查 R2 bucket 名称是否正确
-3. 查看 Cloudflare Dashboard 的 R2 日志
+2. 检查 R2 绑定名称是否正确（`MEDIA`）
+3. 查看 Worker 日志排查问题
 
 #### 4. 后台无法登录
 
-1. 确认已创建管理员账户
-2. 检查密码哈希是否正确生成
-3. 尝试重新插入管理员数据
+1. 确认已在 D1 中创建管理员账户
+2. 检查密码哈希是否正确
+3. 在 D1 查询界面验证数据：`SELECT * FROM admins`
 
 #### 5. 邮件发送失败
 
 1. 确认已配置 `EMAIL_API_KEY` 环境变量
 2. 检查 `ADMIN_EMAIL` 是否正确
-3. 查看 Cloudflare Workers 日志
+3. 查看 Worker 日志
 
 ### 查看日志
 
-```bash
-# 查看实时日志
-wrangler tail
-```
+在 Cloudflare Dashboard：
+1. **Workers & Pages** > 你的 Worker
+2. 点击 **Logs** > **Real-time** 查看实时日志
 
 ---
 
@@ -519,26 +494,13 @@ wrangler tail
 2. 点击 **Add a Site**
 3. 按照指引添加域名
 
-### 2. 配置 DNS 记录
+### 2. 绑定自定义域名到 Worker
 
-添加 CNAME 记录指向你的 Worker：
-
-| 类型 | 名称 | 内容 | 代理状态 |
-|------|------|------|----------|
-| CNAME | @ | your-worker.subdomain.workers.dev | Proxied |
-
-### 3. 部署自定义域名
-
-```bash
-wrangler routes update
-```
-
-或在 `wrangler.toml` 中配置：
-
-```toml
-[[routes]]
-pattern = "yourdomain.com"
-```
+1. 进入 **Workers & Pages** > 你的 Worker
+2. 点击 **Triggers** > **Custom Domains**
+3. 点击 **Add Custom Domain**
+4. 输入你的域名（如 `www.yourdomain.com`）
+5. Cloudflare 会自动配置必要的 DNS 记录
 
 ---
 
