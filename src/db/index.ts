@@ -1,5 +1,5 @@
 import { D1Database, R2Bucket } from '@cloudflare/workers-types';
-import type { Category, Product, Inquiry, Admin } from '../types';
+import type { Category, Product, Inquiry } from '../types';
 
 export interface Env {
   DB: D1Database;
@@ -723,7 +723,7 @@ class Database {
     return result.meta!.last_row_id as number;
   }
 
-  async updateLeadStatus(id: number, status: string, notes?: string): Promise<boolean> {
+  async updateLeadStatus(id: number, status: string, _notes?: string): Promise<boolean> {
     const result = await this.db.prepare(`
       UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
     `).bind(status, id).run();
@@ -863,8 +863,216 @@ class Database {
     const result = await this.db.prepare('DELETE FROM contact_info WHERE id = ?').bind(id).run();
     return result.success;
   }
+
+  async getSlides(): Promise<any[]> {
+    const result = await this.db.prepare('SELECT * FROM slides WHERE is_active = 1 ORDER BY sort_order ASC, id ASC').all();
+    return result.results as any[];
+  }
+
+  async getSlideById(id: number): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM slides WHERE id = ?').bind(id).first();
+    return result as any;
+  }
+
+  async createSlide(slide: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO slides (title, subtitle, description, image_url, link_url, link_text, is_active, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      slide.title,
+      slide.subtitle || null,
+      slide.description || null,
+      slide.image_url || null,
+      slide.link_url || null,
+      slide.link_text || null,
+      slide.is_active !== undefined ? slide.is_active : 1,
+      slide.sort_order || 0
+    ).run();
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateSlide(id: number, slide: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    if (slide.title !== undefined) { updates.push('title = ?'); params.push(slide.title); }
+    if (slide.subtitle !== undefined) { updates.push('subtitle = ?'); params.push(slide.subtitle); }
+    if (slide.description !== undefined) { updates.push('description = ?'); params.push(slide.description); }
+    if (slide.image_url !== undefined) { updates.push('image_url = ?'); params.push(slide.image_url); }
+    if (slide.link_url !== undefined) { updates.push('link_url = ?'); params.push(slide.link_url); }
+    if (slide.link_text !== undefined) { updates.push('link_text = ?'); params.push(slide.link_text); }
+    if (slide.is_active !== undefined) { updates.push('is_active = ?'); params.push(slide.is_active); }
+    if (slide.sort_order !== undefined) { updates.push('sort_order = ?'); params.push(slide.sort_order); }
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    const result = await this.db.prepare(`UPDATE slides SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteSlide(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM slides WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getJsonLdConfigs(): Promise<any[]> {
+    const result = await this.db.prepare('SELECT * FROM json_ld_configs WHERE is_active = 1 ORDER BY id ASC').all();
+    return result.results as any[];
+  }
+
+  async getJsonLdConfigById(id: number): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM json_ld_configs WHERE id = ?').bind(id).first();
+    return result as any;
+  }
+
+  async createJsonLdConfig(config: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO json_ld_configs (page_type, name, description, url, logo, same_as, contact_point, extra_data, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      config.page_type,
+      config.name || null,
+      config.description || null,
+      config.url || null,
+      config.logo || null,
+      config.same_as || null,
+      config.contact_point || null,
+      config.extra_data || null,
+      config.is_active !== undefined ? config.is_active : 1
+    ).run();
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateJsonLdConfig(id: number, config: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    if (config.page_type !== undefined) { updates.push('page_type = ?'); params.push(config.page_type); }
+    if (config.name !== undefined) { updates.push('name = ?'); params.push(config.name); }
+    if (config.description !== undefined) { updates.push('description = ?'); params.push(config.description); }
+    if (config.url !== undefined) { updates.push('url = ?'); params.push(config.url); }
+    if (config.logo !== undefined) { updates.push('logo = ?'); params.push(config.logo); }
+    if (config.same_as !== undefined) { updates.push('same_as = ?'); params.push(config.same_as); }
+    if (config.contact_point !== undefined) { updates.push('contact_point = ?'); params.push(config.contact_point); }
+    if (config.extra_data !== undefined) { updates.push('extra_data = ?'); params.push(config.extra_data); }
+    if (config.is_active !== undefined) { updates.push('is_active = ?'); params.push(config.is_active); }
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    const result = await this.db.prepare(`UPDATE json_ld_configs SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteJsonLdConfig(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM json_ld_configs WHERE id = ?').bind(id).run();
+    return result.success;
+  }
+
+  async getRobotsConfigs(): Promise<any[]> {
+    const result = await this.db.prepare('SELECT * FROM robots_configs WHERE is_active = 1 ORDER BY sort_order ASC').all();
+    return result.results as any[];
+  }
+
+  async getRobotsConfigById(id: number): Promise<any> {
+    const result = await this.db.prepare('SELECT * FROM robots_configs WHERE id = ?').bind(id).first();
+    return result as any;
+  }
+
+  async createRobotsConfig(config: Partial<any>): Promise<number> {
+    const result = await this.db.prepare(`
+      INSERT INTO robots_configs (user_agent, allow_paths, disallow_paths, sitemap_url, is_active, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      config.user_agent,
+      config.allow_paths || null,
+      config.disallow_paths || null,
+      config.sitemap_url || null,
+      config.is_active !== undefined ? config.is_active : 1,
+      config.sort_order || 0
+    ).run();
+    return result.meta!.last_row_id as number;
+  }
+
+  async updateRobotsConfig(id: number, config: Partial<any>): Promise<boolean> {
+    const updates: string[] = [];
+    const params: any[] = [];
+    if (config.user_agent !== undefined) { updates.push('user_agent = ?'); params.push(config.user_agent); }
+    if (config.allow_paths !== undefined) { updates.push('allow_paths = ?'); params.push(config.allow_paths); }
+    if (config.disallow_paths !== undefined) { updates.push('disallow_paths = ?'); params.push(config.disallow_paths); }
+    if (config.sitemap_url !== undefined) { updates.push('sitemap_url = ?'); params.push(config.sitemap_url); }
+    if (config.is_active !== undefined) { updates.push('is_active = ?'); params.push(config.is_active); }
+    if (config.sort_order !== undefined) { updates.push('sort_order = ?'); params.push(config.sort_order); }
+    if (updates.length === 0) return false;
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(id);
+    const result = await this.db.prepare(`UPDATE robots_configs SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return result.success;
+  }
+
+  async deleteRobotsConfig(id: number): Promise<boolean> {
+    const result = await this.db.prepare('DELETE FROM robots_configs WHERE id = ?').bind(id).run();
+    return result.success;
+  }
 }
 
 export function createDatabase(db: D1Database): Database {
   return new Database(db);
+}
+
+export { Database };
+
+export async function generateRobotsTxt(db: D1Database): Promise<string> {
+  const configs = await db.prepare('SELECT * FROM robots_configs WHERE is_active = 1 ORDER BY sort_order ASC').all();
+  const settings = await db.prepare('SELECT value FROM settings WHERE key = ?').bind('site_url').first() as any;
+  const siteUrl = settings?.value || '';
+
+  let robots = '# Robots.txt\n';
+  for (const config of (configs.results as any) || []) {
+    robots += `User-agent: ${config.user_agent}\n`;
+    if (config.allow_paths) {
+      const paths = config.allow_paths.split('\n').filter((p: string) => p.trim());
+      for (const path of paths) {
+        robots += `Allow: ${path.trim()}\n`;
+      }
+    }
+    if (config.disallow_paths) {
+      const paths = config.disallow_paths.split('\n').filter((p: string) => p.trim());
+      for (const path of paths) {
+        robots += `Disallow: ${path.trim()}\n`;
+      }
+    }
+    if (config.sitemap_url) {
+      robots += `Sitemap: ${config.sitemap_url}\n`;
+    } else if (siteUrl) {
+      robots += `Sitemap: ${siteUrl}/sitemap.xml\n`;
+    }
+    robots += '\n';
+  }
+  return robots;
+}
+
+export async function generateLLMsTxt(db: D1Database): Promise<string> {
+  const settings = await db.prepare('SELECT key, value FROM settings').all();
+  const siteName = settings.results?.find((s: any) => s.key === 'site_name')?.value || 'B2B Wholesale';
+  const siteDesc = settings.results?.find((s: any) => s.key === 'site_description')?.value || '';
+
+  let content = `# ${siteName}\n\n`;
+  content += `${siteDesc}\n\n`;
+
+  const products = await db.prepare('SELECT name, short_description FROM products WHERE is_active = 1 LIMIT 20').all();
+  if (products.results?.length) {
+    content += `## Products\n\n`;
+    for (const p of products.results as any[]) {
+      content += `- ${p.name}: ${p.short_description || ''}\n`;
+    }
+    content += '\n';
+  }
+
+  const categories = await db.prepare('SELECT name, description FROM categories WHERE is_active = 1').all();
+  if (categories.results?.length) {
+    content += `## Categories\n\n`;
+    for (const c of categories.results as any[]) {
+      content += `- ${c.name}: ${c.description || ''}\n`;
+    }
+  }
+
+  return content;
 }

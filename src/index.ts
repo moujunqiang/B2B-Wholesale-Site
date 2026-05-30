@@ -19,7 +19,7 @@ import slides from './api/slides';
 import jsonLd from './api/jsonld';
 import robots from './api/robots';
 import { authMiddleware } from './middleware/auth';
-import { Database } from './db';
+import { Database, generateRobotsTxt, generateLLMsTxt } from './db';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -374,16 +374,14 @@ app.get('/sitemap.xml', async (c) => {
 });
 
 app.get('/robots.txt', async (c) => {
-  const db = new Database(c.env.DB);
-  const content = await db.generateRobotsTxt();
+  const content = await generateRobotsTxt(c.env.DB);
   return new Response(content, {
     headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' },
   });
 });
 
 app.get('/LLMs.txt', async (c) => {
-  const db = new Database(c.env.DB);
-  const content = await db.generateLLMsTxt();
+  const content = await generateLLMsTxt(c.env.DB);
   return new Response(content, {
     headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' },
   });

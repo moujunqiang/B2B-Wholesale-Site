@@ -1,3 +1,5 @@
+import type { Env } from '../db';
+
 export interface SendEmailOptions {
   to: string | string[];
   subject: string;

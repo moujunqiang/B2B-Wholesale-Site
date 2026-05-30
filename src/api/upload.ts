@@ -8,26 +8,26 @@ upload.use('/*', authMiddleware);
 
 upload.post('/image', async (c) => {
   try {
-    const formData = await c.req.parseFormData();
+    const formData = await c.req.formData();
     const file = formData.get('file') as File | null;
-    
+
     if (!file) {
       return c.json({ success: false, error: 'No file provided' }, 400);
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      return c.json({ 
-        success: false, 
-        error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP' 
+      return c.json({
+        success: false,
+        error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP'
       }, 400);
     }
 
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      return c.json({ 
-        success: false, 
-        error: 'File too large. Max size: 5MB' 
+      return c.json({
+        success: false,
+        error: 'File too large. Max size: 5MB'
       }, 400);
     }
 
@@ -43,7 +43,8 @@ upload.post('/image', async (c) => {
       },
     });
 
-    const imageUrl = `https://b2b-wholesale-media.${c.env.R2_BUCKET.bucketName}.r2.cloudflarestorage.com/${key}`;
+    const bucketName = 'b2b-wholesale-media';
+    const imageUrl = `https://${bucketName}.r2.cloudflarestorage.com/${key}`;
 
     return c.json({
       success: true,
@@ -56,9 +57,9 @@ upload.post('/image', async (c) => {
     });
   } catch (err) {
     console.error('Upload error:', err);
-    return c.json({ 
-      success: false, 
-      error: 'Failed to upload image' 
+    return c.json({
+      success: false,
+      error: 'Failed to upload image'
     }, 500);
   }
 });

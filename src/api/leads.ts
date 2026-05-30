@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../types';
 import { Database } from '../db';
-import { sendEmail, generateInquiryNotificationEmail } from '../utils/email';
+import { sendEmail } from '../utils/email';
 
 const leads = new Hono<{ Bindings: Env }>();
 
