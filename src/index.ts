@@ -79,13 +79,13 @@ app.get('/', async (c) => {
       ${logoUrl ? `<a href="/" class="logo"><img src="${logoUrl}" alt="${siteName}"></a>` : `<a href="/" class="logo">${siteName}</a>`}
       <ul class="nav-links">
         <li><a href="/">Home</a></li>
-        <li><a href="/products">Products Center</a></li>
+        <li><a href="/about">About Us</a></li>
+        <li><a href="/products">Products</a></li>
         <li><a href="/solutions">Solutions</a></li>
         <li><a href="/cases">Cases</a></li>
-        <li><a href="/news">News</a></li>
-        <li><a href="/about">About Us</a></li>
+        <li><a href="/news">Blogs</a></li>
         <li><a href="/contact">Contact Us</a></li>
-        <li><a href="/contact" class="btn btn-quote">Get a Quote</a></li>
+        <li><a href="/" class="btn btn-quote">Get a Quote</a></li>
       </ul>
     </nav>
   </header>
@@ -338,7 +338,7 @@ app.route('/api/inquiries', inquiries);
 app.route('/api/settings', settings);
 app.route('/api/translations', translations);
 app.route('/api/admin', admin);
-app.route('/api/upload', upload);
+app。route('/api/upload', upload);
 app.route('/api/pages', pages);
 app.route('/api/solutions', solutions);
 app.route('/api/cases', cases);
