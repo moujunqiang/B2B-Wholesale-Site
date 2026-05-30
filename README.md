@@ -166,34 +166,18 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 
 > **注意**：管理员账号通过环境变量配置，不再使用数据库存储。
 
-#### 更新 wrangler.toml（重要）
-
-在 `wrangler.toml` 中将 `database_id` 替换为你的 D1 数据库 ID：
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "b2b_wholesale_db"
-database_id = "你的-真实-database-id"  # 替换这里
-```
-
 ### 6. 后台管理登录
 
-方式一：访问 `/admin` 并输入用户名密码
-方式二：URL 参数登录 `/admin?username=账号&password=密码`
-
-> **注意**：如果同步 Git 仓库后绑定消失，需要在 Dashboard 重新添加 D1 和 R2 绑定。
+访问 `/admin` 并输入环境变量中配置的 ADMIN_USERNAME 和 ADMIN_PASSWORD 登录。
 
 ### 7. 自动部署
-
-### 6. 自动部署
 
 1. 在 GitHub 上修改代码并提交推送
 2. Cloudflare 会自动触发部署
 3. 等待部署完成（约 1-2 分钟）
 4. 访问 Worker 提供的默认域名测试
 
-### 7. 绑定自定义域名
+### 8. 绑定自定义域名
 
 1. 在 Worker 页面点击 **Triggers** > **Custom Domains**
 2. 添加你的域名（如 `www.yourdomain.com`）
@@ -205,7 +189,7 @@ database_id = "你的-真实-database-id"  # 替换这里
 ### 1. 访问后台管理
 
 1. 打开浏览器访问 `/admin`（如 `https://yourdomain.com/admin`）
-2. 使用环境变量中配置的管理员用户名和密码登录
+2. 使用环境变量中配置的 ADMIN_USERNAME 和 ADMIN_PASSWORD 登录
 3. 登录后可管理所有内容
 
 ### 2. 基础设置
