@@ -106,15 +106,6 @@ $(document).ready(function() {
       $('#login-error').text(t('login.loginFailed')).fadeIn();
     }
   });
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlUsername = urlParams.get('username');
-  const urlPassword = urlParams.get('password');
-  if (urlUsername && urlPassword) {
-    $('#username').val(urlUsername);
-    $('#password').val(urlPassword);
-    $('#login-form').trigger('submit');
-  }
   
   $('#logout-btn').on('click', function() {
     localStorage.removeItem('adminCreds');
