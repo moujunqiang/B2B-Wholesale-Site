@@ -15,6 +15,9 @@ import solutions from './api/solutions';
 import cases from './api/cases';
 import news from './api/news';
 import leads from './api/leads';
+import slides from './api/slides';
+import jsonLd from './api/jsonld';
+import robots from './api/robots';
 import { authMiddleware } from './middleware/auth';
 import { Database } from './db';
 
@@ -27,6 +30,27 @@ app.use('/api/*', cors());
 app.use('/api/admin/*', authMiddleware);
 app.use('/api/upload/*', authMiddleware);
 
+function getSocialIcon(platform: string): string {
+  const icons: { [key: string]: string } = {
+    'facebook': 'fa-facebook',
+    'tiktok': 'fa-tiktok',
+    'x': 'fa-x-twitter',
+    'youtube': 'fa-youtube',
+    'instagram': 'fa-instagram',
+    'linkedin': 'fa-linkedin',
+  };
+  return icons[platform] || 'fa-link';
+}
+
+function getContactIcon(type: string): string {
+  const icons: { [key: string]: string } = {
+    'email': 'fa-envelope',
+    'phone': 'fa-phone',
+    'whatsapp': 'fa-whatsapp',
+  };
+  return icons[type] || 'fa-circle';
+}
+
 app.get('/', async (c) => {
   const db = new Database(c.env.DB);
   const settingsData = await db.getSettings();
@@ -38,6 +62,26 @@ app.get('/', async (c) => {
   
   const socialLinks = await db.getSocialLinks();
   const contactInfo = await db.getContactInfo();
+  const slidesData = await db.getSlides();
+  
+  // Generate JSON-LD scripts
+  const jsonLdConfigs = await db.getJsonLdConfigs();
+  const jsonLdScript = jsonLdConfigs.map(config => {
+    try {
+      let ldData: any = { "@context": "https://schema.org" };
+      if (config.extra_data) {
+        const extra = JSON.parse(config.extra_data);
+        ldData = { ...ldData, ...extra };
+      }
+      if (config.name) ldData.name = config.name;
+      if (config.description) ldData.description = config.description;
+      if (config.url) ldData.url = config.url;
+      if (config.logo) ldData.logo = { url: config.logo };
+      return `<script type="application/ld+json">${JSON.stringify(ldData)}</script>`;
+    } catch (e) {
+      return '';
+    }
+  }).join('\n');
   
   return c.html(`
 <!DOCTYPE html>
@@ -60,6 +104,7 @@ app.get('/', async (c) => {
   <title>${siteTitle}</title>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  ${jsonLdScript}
 </head>
 <body>
   <div class="top-bar">
@@ -79,18 +124,40 @@ app.get('/', async (c) => {
       ${logoUrl ? `<a href="/" class="logo"><img src="${logoUrl}" alt="${siteName}"></a>` : `<a href="/" class="logo">${siteName}</a>`}
       <ul class="nav-links">
         <li><a href="/">Home</a></li>
-        <li><a href="/about">About Us</a></li>
         <li><a href="/products">Products</a></li>
         <li><a href="/solutions">Solutions</a></li>
         <li><a href="/cases">Cases</a></li>
         <li><a href="/news">Blogs</a></li>
+        <li><a href="/about">About Us</a></li>
         <li><a href="/contact">Contact Us</a></li>
-        <li><a href="/" class="btn btn-quote">Get a Quote</a></li>
+        <li><a href="#" class="btn btn-quote" onclick="showPopup(); return false;">Get a Quote</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
+    ${slidesData.length > 0 ? `
+    <div class="slider-container">
+      <div class="slider">
+        ${slidesData.map((slide: any, index: number) => `
+          <div class="slide ${index === 0 ? 'active' : ''}" ${slide.link_url ? `data-link="${slide.link_url}"` : ''}>
+            <div class="slide-bg" style="background-image: url('${slide.image_url || '/images/placeholder.jpg'}');"></div>
+            <div class="slide-content container">
+              <h1>${slide.title}</h1>
+              ${slide.subtitle ? `<h2>${slide.subtitle}</h2>` : ''}
+              ${slide.description ? `<p>${slide.description}</p>` : ''}
+              ${slide.link_url ? `<a href="${slide.link_url}" class="btn btn-primary">${slide.link_text || 'Learn More'}</a>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="slider-btn prev" onclick="slidePrev()">&#10094;</button>
+      <button class="slider-btn next" onclick="slideNext()">&#10095;</button>
+      <div class="slider-dots">
+        ${slidesData.map((_: any, index: number) => `<span class="dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></span>`).join('')}
+      </div>
+    </div>
+    ` : `
     <section class="hero">
       <div class="container">
         <h1>Your Trusted B2B Wholesale Partner</h1>
@@ -99,6 +166,7 @@ app.get('/', async (c) => {
         <a href="/contact" class="btn btn-outline">Contact Us</a>
       </div>
     </section>
+    `}
 
     <section id="products" class="section">
       <div class="container">
@@ -169,7 +237,7 @@ app.get('/', async (c) => {
             <li><a href="/products">Products</a></li>
             <li><a href="/solutions">Solutions</a></li>
             <li><a href="/cases">Cases</a></li>
-            <li><a href="/news">News</a></li>
+            <li><a href="/news">Blogs</a></li>
           </ul>
         </div>
         <div class="footer-section">
@@ -232,29 +300,6 @@ app.get('/', async (c) => {
   `);
 });
 
-function getSocialIcon(platform: string): string {
-  const icons: { [key: string]: string } = {
-    'facebook': 'fa-facebook',
-    'tiktok': 'fa-tiktok',
-    'x': 'fa-x-twitter',
-    'youtube': 'fa-youtube',
-    'instagram': 'fa-instagram',
-    'linkedin': 'fa-linkedin',
-    'twitter': 'fa-twitter',
-  };
-  return icons[platform] || 'fa-link';
-}
-
-function getContactIcon(type: string): string {
-  const icons: { [key: string]: string } = {
-    'email': 'fa-envelope',
-    'phone': 'fa-phone',
-    'whatsapp': 'fa-whatsapp',
-    'address': 'fa-map-marker-alt',
-  };
-  return icons[type] || 'fa-circle';
-}
-
 app.get('/sitemap.xml', async (c) => {
   const db = new Database(c.env.DB);
   const products = await db.getProducts(undefined, 1, 1000);
@@ -268,14 +313,7 @@ app.get('/sitemap.xml', async (c) => {
   
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-  
-  xml += '  <url>\n';
-  xml += '    <loc>https://b2bwholesale.com/</loc>\n';
-  xml += '    <lastmod>2026-01-01</lastmod>';
-  xml += '    <changefreq>daily</changefreq>';
-  xml += '    <priority>1.0</priority>\n';
-  xml += '  </url>\n';
-  
+  xml += '  <url>\n    <loc>https://b2bwholesale.com/</loc>\n    <lastmod>2026-01-01</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n';
   xml += '  <url>\n    <loc>https://b2bwholesale.com/products</loc>\n    <priority>0.9</priority>\n  </url>\n';
   xml += '  <url>\n    <loc>https://b2bwholesale.com/solutions</loc>\n    <priority>0.8</priority>\n  </url>\n';
   xml += '  <url>\n    <loc>https://b2bwholesale.com/cases</loc>\n    <priority>0.8</priority>\n  </url>\n';
@@ -286,49 +324,41 @@ app.get('/sitemap.xml', async (c) => {
   for (const category of categories) {
     xml += `  <url>\n    <loc>${baseUrl}/category/${category.slug}</loc>\n    <lastmod>${category.updated_at}</lastmod>\n    <priority>0.7</priority>\n  </url>\n`;
   }
-  
   for (const product of products.items) {
     xml += `  <url>\n    <loc>${baseUrl}/product/${product.slug}</loc>\n    <lastmod>${product.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
-  
   for (const solution of solutions) {
     xml += `  <url>\n    <loc>${baseUrl}/solution/${solution.slug}</loc>\n    <lastmod>${solution.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
-  
   for (const item of cases) {
     xml += `  <url>\n    <loc>${baseUrl}/case/${item.slug}</loc>\n    <lastmod>${item.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
-  
   for (const item of news.items) {
     xml += `  <url>\n    <loc>${baseUrl}/news/${item.slug}</loc>\n    <lastmod>${item.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
-  
   for (const page of pages) {
     xml += `  <url>\n    <loc>${baseUrl}/${page.slug}</loc>\n    <lastmod>${page.updated_at}</lastmod>\n    <priority>0.5</priority>\n  </url>\n`;
   }
-  
   xml += '</urlset>';
   
   return new Response(xml, {
-    headers: {
-      'Content-Type': 'application/xml',
-      'Cache-Control': 'public, max-age=3600',
-    },
+    headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'public, max-age=3600' },
   });
 });
 
-app.get('/robots.txt', (c) => {
-  const robots = `User-agent: *
-Allow: /
-Disallow: /admin
+app.get('/robots.txt', async (c) => {
+  const db = new Database(c.env.DB);
+  const content = await db.generateRobotsTxt();
+  return new Response(content, {
+    headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' },
+  });
+});
 
-Sitemap: https://b2bwholesale.com/sitemap.xml`;
-  
-  return new Response(robots, {
-    headers: {
-      'Content-Type': 'text/plain',
-      'Cache-Control': 'public, max-age=86400',
-    },
+app.get('/LLMs.txt', async (c) => {
+  const db = new Database(c.env.DB);
+  const content = await db.generateLLMsTxt();
+  return new Response(content, {
+    headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' },
   });
 });
 
@@ -338,16 +368,18 @@ app.route('/api/inquiries', inquiries);
 app.route('/api/settings', settings);
 app.route('/api/translations', translations);
 app.route('/api/admin', admin);
-app。route('/api/upload', upload);
+app.route('/api/upload', upload);
 app.route('/api/pages', pages);
 app.route('/api/solutions', solutions);
 app.route('/api/cases', cases);
 app.route('/api/news', news);
 app.route('/api/leads', leads);
+app.route('/api/slides', slides);
+app.route('/api/jsonld', jsonLd);
+app.route('/api/robots', robots);
 
 app.get('/admin/*', async (c) => {
-  return c.html(`
-<!DOCTYPE html>
+  return c.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -376,7 +408,6 @@ app.get('/admin/*', async (c) => {
         <div id="login-error" class="error-message"></div>
       </div>
     </div>
-
     <div id="admin-view" class="admin-layout" style="display: none;">
       <aside class="sidebar">
         <h2>Admin Panel</h2>
@@ -384,6 +415,7 @@ app.get('/admin/*', async (c) => {
           <a href="#dashboard" class="nav-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
           <a href="#products" class="nav-item"><i class="fas fa-box"></i> Products</a>
           <a href="#categories" class="nav-item"><i class="fas fa-tags"></i> Categories</a>
+          <a href="#slides" class="nav-item"><i class="fas fa-images"></i> Slides</a>
           <a href="#solutions" class="nav-item"><i class="fas fa-lightbulb"></i> Solutions</a>
           <a href="#cases" class="nav-item"><i class="fas fa-briefcase"></i> Cases</a>
           <a href="#news" class="nav-item"><i class="fas fa-newspaper"></i> News</a>
@@ -391,208 +423,74 @@ app.get('/admin/*', async (c) => {
           <a href="#inquiries" class="nav-item"><i class="fas fa-envelope"></i> Inquiries</a>
           <a href="#leads" class="nav-item"><i class="fas fa-users"></i> Leads</a>
           <a href="#settings" class="nav-item"><i class="fas fa-cog"></i> Settings</a>
+          <a href="#seo" class="nav-item"><i class="fas fa-search"></i> SEO & JSON-LD</a>
+          <a href="#robots" class="nav-item"><i class="fas fa-robot"></i> Robots.txt</a>
         </nav>
       </aside>
-
       <main class="main-content">
         <header class="admin-header">
           <h1 id="page-title">Dashboard</h1>
           <button id="logout-btn" class="btn btn-outline">Logout</button>
         </header>
-
         <div id="dashboard-page" class="page active">
           <div class="stats-grid">
-            <div class="stat-card">
-              <h3>Total Products</h3>
-              <p id="stat-products">-</p>
-            </div>
-            <div class="stat-card">
-              <h3>Total Inquiries</h3>
-              <p id="stat-inquiries">-</p>
-            </div>
-            <div class="stat-card">
-              <h3>Pending Inquiries</h3>
-              <p id="stat-pending">-</p>
-            </div>
-            <div class="stat-card">
-              <h3>Total Leads</h3>
-              <p id="stat-leads">-</p>
-            </div>
-            <div class="stat-card">
-              <h3>Total Cases</h3>
-              <p id="stat-cases">-</p>
-            </div>
-            <div class="stat-card">
-              <h3>Total News</h3>
-              <p id="stat-news">-</p>
-            </div>
+            <div class="stat-card"><h3>Total Products</h3><p id="stat-products">-</p></div>
+            <div class="stat-card"><h3>Total Inquiries</h3><p id="stat-inquiries">-</p></div>
+            <div class="stat-card"><h3>Pending Inquiries</h3><p id="stat-pending">-</p></div>
+            <div class="stat-card"><h3>Total Leads</h3><p id="stat-leads">-</p></div>
+            <div class="stat-card"><h3>Total Cases</h3><p id="stat-cases">-</p></div>
+            <div class="stat-card"><h3>Total News</h3><p id="stat-news">-</p></div>
           </div>
         </div>
-
-        <div id="products-page" class="page">
-          <div class="page-header">
-            <h2>Products</h2>
-            <button id="add-product-btn" class="btn">Add Product</button>
-          </div>
-          <div id="product-table"></div>
-        </div>
-
-        <div id="categories-page" class="page">
-          <div class="page-header">
-            <h2>Categories</h2>
-            <button id="add-category-btn" class="btn">Add Category</button>
-          </div>
-          <div id="category-table"></div>
-        </div>
-
-        <div id="solutions-page" class="page">
-          <div class="page-header">
-            <h2>Solutions</h2>
-            <button id="add-solution-btn" class="btn">Add Solution</button>
-          </div>
-          <div id="solution-table"></div>
-        </div>
-
-        <div id="cases-page" class="page">
-          <div class="page-header">
-            <h2>Cases</h2>
-            <button id="add-case-btn" class="btn">Add Case</button>
-          </div>
-          <div id="case-table"></div>
-        </div>
-
-        <div id="news-page" class="page">
-          <div class="page-header">
-            <h2>News</h2>
-            <button id="add-news-btn" class="btn">Add News</button>
-          </div>
-          <div id="news-table"></div>
-        </div>
-
-        <div id="pages-page" class="page">
-          <div class="page-header">
-            <h2>Pages</h2>
-          </div>
-          <div id="pages-table"></div>
-        </div>
-
-        <div id="inquiries-page" class="page">
-          <div class="page-header">
-            <h2>Inquiries</h2>
-          </div>
-          <div id="inquiry-table"></div>
-        </div>
-
-        <div id="leads-page" class="page">
-          <div class="page-header">
-            <h2>Leads</h2>
-          </div>
-          <div id="leads-table"></div>
-        </div>
-
-        <div id="settings-page" class="page">
-          <h2>Settings</h2>
-          <form id="settings-form"></form>
-          <h2 style="margin-top: 2rem;">Popup Settings</h2>
-          <form id="popup-settings-form"></form>
-          <h2 style="margin-top: 2rem;">Social Links</h2>
-          <div id="social-links-form"></div>
-          <h2 style="margin-top: 2rem;">Contact Info</h2>
-          <div id="contact-info-form"></div>
-        </div>
+        <div id="products-page" class="page"><div class="page-header"><h2>Products</h2><button id="add-product-btn" class="btn">Add Product</button></div><div id="product-table"></div></div>
+        <div id="categories-page" class="page"><div class="page-header"><h2>Categories</h2><button id="add-category-btn" class="btn">Add Category</button></div><div id="category-table"></div></div>
+        <div id="slides-page" class="page"><div class="page-header"><h2>Home Slides</h2><button id="add-slide-btn" class="btn">Add Slide</button></div><div id="slide-table"></div></div>
+        <div id="solutions-page" class="page"><div class="page-header"><h2>Solutions</h2><button id="add-solution-btn" class="btn">Add Solution</button></div><div id="solution-table"></div></div>
+        <div id="cases-page" class="page"><div class="page-header"><h2>Cases</h2><button id="add-case-btn" class="btn">Add Case</button></div><div id="case-table"></div></div>
+        <div id="news-page" class="page"><div class="page-header"><h2>News</h2><button id="add-news-btn" class="btn">Add News</button></div><div id="news-table"></div></div>
+        <div id="pages-page" class="page"><div class="page-header"><h2>Pages</h2></div><div id="pages-table"></div></div>
+        <div id="inquiries-page" class="page"><div class="page-header"><h2>Inquiries</h2></div><div id="inquiry-table"></div></div>
+        <div id="leads-page" class="page"><div class="page-header"><h2>Leads</h2></div><div id="leads-table"></div></div>
+        <div id="settings-page" class="page"><h2>General Settings</h2><form id="settings-form"></form><h2 style="margin-top: 2rem;">Popup Settings</h2><form id="popup-settings-form"></form><h2 style="margin-top: 2rem;">Social Links</h2><div id="social-links-form"></div><h2 style="margin-top: 2rem;">Contact Info</h2><div id="contact-info-form"></div></div>
+        <div id="seo-page" class="page"><h2>JSON-LD Configuration</h2><div id="jsonld-form"></div></div>
+        <div id="robots-page" class="page"><h2>Robots.txt Configuration</h2><div id="robots-form"></div><button class="btn" onclick="previewRobots()">Preview robots.txt</button></div>
       </main>
     </div>
   </div>
-
   <script src="/js/admin.js"></script>
 </body>
-</html>
-  `);
+</html>`);
 });
 
 app.get('/products', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>Products - B2B Wholesale</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Products Center</h1><div id="products-container"></div><script src="/js/products.js"><\/script></body></html>');
+  return c.html('<!DOCTYPE html><html><head><title>Products</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Products Center</h1></body></html>');
 });
 
 app.get('/solutions', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>Solutions - B2B Wholesale</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Application Solutions</h1><div id="solutions-container"></div><script src="/js/solutions.js"><\/script></body></html>');
+  return c.html('<!DOCTYPE html><html><head><title>Solutions</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Solutions</h1></body></html>');
 });
 
 app.get('/cases', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>Cases - B2B Wholesale</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Customer Cases</h1><div id="cases-container"></div><script src="/js/cases.js"><\/script></body></html>');
+  return c.html('<!DOCTYPE html><html><head><title>Cases</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Cases</h1></body></html>');
 });
 
 app.get('/news', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>News - B2B Wholesale</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>Latest News</h1><div id="news-container"></div><script src="/js/news.js"><\/script></body></html>');
+  return c.html('<!DOCTYPE html><html><head><title>News</title><link rel="stylesheet" href="/css/styles.css"></head><body><h1>News</h1></body></html>');
 });
 
 app.get('/about', async (c) => {
   const db = new Database(c.env.DB);
   const page = await db.getPageBySlug('about');
-  
-  return c.html(`
-<!DOCTYPE html>
-<html>
-<head>
-  <title>${page?.meta_title || 'About Us'} - B2B Wholesale</title>
-  <link rel="stylesheet" href="/css/styles.css">
-</head>
-<body>
-  <div class="container page-content">
-    ${page?.content || '<h1>About Us</h1><p>Content coming soon...</p>'}
-  </div>
-</body>
-</html>
-  `);
+  return c.html(`<!DOCTYPE html><html><head><title>${page?.meta_title || 'About Us'}</title><link rel="stylesheet" href="/css/styles.css"></head><body><div class="container page-content">${page?.content || '<h1>About Us</h1>'}</div></body></html>`);
 });
 
 app.get('/contact', async (c) => {
   const db = new Database(c.env.DB);
-  const page = await db.getPageBySlug('contact');
   const contactInfo = await db.getContactInfo();
-  
-  return c.html(`
-<!DOCTYPE html>
-<html>
-<head>
-  <title>${page?.meta_title || 'Contact Us'} - B2B Wholesale</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-  <div class="container page-content">
-    <h1>Contact Us</h1>
-    <div class="contact-info">
-      ${contactInfo.map(i => `<p><i class="fas ${getContactIcon(i.type)}"></i> ${i.label || i.type}: ${i.value}</p>`).join('')}
-    </div>
-    <form class="inquiry-form">
-      <div class="form-group">
-        <label for="name">Name *</label>
-        <input type="text" id="name" name="name" required>
-      </div>
-      <div class="form-group">
-        <label for="email">Email *</label>
-        <input type="email" id="email" name="email" required>
-      </div>
-      <div class="form-group">
-        <label for="message">Message *</label>
-        <textarea id="message" name="message" rows="5" required></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary">Send Message</button>
-    </form>
-  </div>
-</body>
-</html>
-  `);
+  return c.html(`<!DOCTYPE html><html><head><title>Contact Us</title><link rel="stylesheet" href="/css/styles.css"></head><body><div class="container page-content"><h1>Contact Us</h1><div class="contact-info">${contactInfo.map((i: any) => \`<p>\${i.label || i.type}: \${i.value}</p>\`).join('')}</div></div></body></html>`);
 });
 
-app.notFound((c) => {
-  return c.json({ success: false, error: 'Not Found' }, 404);
-});
-
-app.onError((err, c) => {
-  console.error(err);
-  return c.json({ success: false, error: err.message }, 500);
-});
+app.notFound((c) => c.json({ success: false, error: 'Not Found' }, 404));
+app.onError((err, c) => { console.error(err); return c.json({ success: false, error: err.message }, 500); });
 
 export default app;
