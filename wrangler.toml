@@ -1,10 +1,12 @@
 name = "b2b-wholesale-site"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
-compatibility_flags = ["nodejs_compat"]
 
 [site]
 bucket = "./public"
+
+[build]
+command = ""
 
 [[d1_databases]]
 binding = "DB"
