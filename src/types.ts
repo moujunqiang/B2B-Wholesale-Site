@@ -3,6 +3,8 @@ export interface Env {
   R2_BUCKET: R2Bucket;
   EMAIL_API_KEY?: string;
   ADMIN_EMAIL?: string;
+  ADMIN_USERNAME?: string;
+  ADMIN_PASSWORD?: string;
 }
 
 export interface Category {

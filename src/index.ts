@@ -51,6 +51,191 @@ function getContactIcon(type: string): string {
   return icons[type] || 'mdi:circle';
 }
 
+function getPageLayout(
+  pageTitle: string,
+  content: string,
+  settingsData: Record<string, string>,
+  socialLinks: any[],
+  contactInfo: any[],
+  jsonLdScript: string = ''
+): string {
+  const siteName = settingsData.site_name || 'B2B Wholesale';
+  const siteDescription = settingsData.site_description || 'Your trusted B2B wholesale platform';
+  const siteTitle = settingsData.site_title || `${siteName} - Quality Products at Wholesale Prices`;
+  const siteKeywords = settingsData.site_keywords || 'B2B, wholesale, bulk order, manufacturer, supplier';
+  const logoUrl = settingsData.logo_url || '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="${siteDescription}">
+  <meta name="keywords" content="${siteKeywords}">
+  <meta name="author" content="${siteName}">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="${siteTitle}">
+  <meta property="og:description" content="${siteDescription}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${siteTitle}">
+  <meta name="twitter:description" content="${siteDescription}">
+  <link rel="canonical" href="https://b2bwholesale.com/${pageTitle.toLowerCase().replace(/\s+/g, '-')}">
+  ${logoUrl ? `<link rel="icon" href="${logoUrl}">` : ''}
+  <title>${pageTitle} - ${siteName}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+  ${jsonLdScript}
+  <style>
+    .nav-link:hover { color: #3b82f6; }
+    @media (max-width: 768px) {
+      .nav-menu { display: none; }
+      .nav-menu.active { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: white; padding: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    }
+  </style>
+</head>
+<body class="font-sans text-gray-800">
+  <div class="hidden md:flex bg-gray-100 border-b border-gray-200 text-sm py-2">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div class="flex gap-6">
+        ${contactInfo.filter(i => i.type === 'email').map((i: any) => `<a href="mailto:${i.value}" class="text-gray-600 hover:text-blue-600 flex items-center gap-2"><iconify-icon icon="mdi:email"></iconify-icon> ${i.value}</a>`).join('')}
+        ${contactInfo.filter(i => i.type === 'phone').map((i: any) => `<a href="tel:${i.value}" class="text-gray-600 hover:text-blue-600 flex items-center gap-2"><iconify-icon icon="mdi:phone"></iconify-icon> ${i.value}</a>`).join('')}
+      </div>
+      <div class="flex gap-4">
+        ${socialLinks.map((s: any) => `<a href="${s.url}" target="_blank" rel="noopener" class="text-gray-600 hover:text-blue-600"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="18"></iconify-icon></a>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <header class="sticky top-0 z-50 bg-white shadow-md">
+    <nav class="container mx-auto px-4 py-4 flex justify-between items-center relative">
+      ${logoUrl ? `<a href="/" class="flex items-center gap-2"><img src="${logoUrl}" alt="${siteName}" class="h-10 w-auto"></a>` : `<a href="/" class="text-2xl font-bold text-blue-600">${siteName}</a>`}
+      <button class="md:hidden" id="mobile-menu-btn">
+        <iconify-icon icon="mdi:menu" width="28"></iconify-icon>
+      </button>
+      <ul class="hidden md:flex items-center gap-8 nav-menu" id="nav-menu">
+        <li><a href="/" class="nav-link font-medium">Home</a></li>
+        <li><a href="/products" class="nav-link font-medium">Products</a></li>
+        <li><a href="/solutions" class="nav-link font-medium">Solutions</a></li>
+        <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
+        <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
+        <li><a href="/about" class="nav-link font-medium">About Us</a></li>
+        <li><a href="/contact" class="nav-link font-medium">Contact Us</a></li>
+        <li><a href="#" onclick="showPopup(); return false;" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold transition">Get a Quote</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    ${content}
+  </main>
+
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4">${siteName}</h3>
+          <p class="text-gray-400">${siteDescription}</p>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="/products" class="text-gray-400 hover:text-white">Products</a></li>
+            <li><a href="/solutions" class="text-gray-400 hover:text-white">Solutions</a></li>
+            <li><a href="/cases" class="text-gray-400 hover:text-white">Cases</a></li>
+            <li><a href="/news" class="text-gray-400 hover:text-white">Blogs</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Contact</h4>
+          ${contactInfo.map((i: any) => `<p class="text-gray-400 flex items-center gap-2 mb-2"><iconify-icon icon="${getContactIcon(i.type)}"></iconify-icon> ${i.value}</p>`).join('')}
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+          <div class="flex gap-4">
+            ${socialLinks.map((s: any) => `<a href="${s.url}" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="20"></iconify-icon></a>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
+        <p>© ${new Date().getFullYear()} ${siteName}. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="fixed right-5 bottom-28 flex flex-col gap-3 z-40">
+    ${contactInfo.filter((i: any) => i.type === 'email').map((i: any) => `<a href="mailto:${i.value}" class="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition" title="Email"><iconify-icon icon="mdi:email" width="24"></iconify-icon></a>`).join('')}
+    ${contactInfo.filter((i: any) => i.type === 'whatsapp').map((i: any) => `<a href="https://wa.me/${i.value.replace(/[^0-9]/g, '')}" class="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-green-500 hover:bg-green-50 hover:scale-110 transition" title="WhatsApp"><iconify-icon icon="fa6-brands:whatsapp" width="24"></iconify-icon></a>`).join('')}
+    ${contactInfo.filter((i: any) => i.type === 'phone').map((i: any) => `<a href="tel:${i.value}" class="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition" title="Phone"><iconify-icon icon="mdi:phone" width="24"></iconify-icon></a>`).join('')}
+    <a href="#" id="back-to-top" class="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:scale-110 transition" title="Back to Top">
+      <iconify-icon icon="mdi:arrow-up" width="24"></iconify-icon>
+    </a>
+  </div>
+
+  <div id="inquiry-popup" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl max-w-lg w-full mx-4 p-8 relative max-h-[90vh] overflow-y-auto">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-3xl leading-none" onclick="closePopup()">×</button>
+      <h2 class="text-2xl font-bold mb-2">Get a Quick Quote</h2>
+      <p class="text-gray-600 mb-6">Fill out the form below and we will get back to you within 24 hours.</p>
+      <form id="popup-form">
+        <div class="mb-4">
+          <label class="block font-medium mb-2">Name *</label>
+          <input type="text" name="name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+        <div class="mb-4">
+          <label class="block font-medium mb-2">Phone</label>
+          <input type="tel" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+        <div class="mb-4">
+          <label class="block font-medium mb-2">WhatsApp</label>
+          <input type="tel" name="whatsapp" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+        <div class="mb-4">
+          <label class="block font-medium mb-2">Message *</label>
+          <textarea name="message" required rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Submit Inquiry</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+      document.getElementById('nav-menu')?.classList.toggle('active');
+    });
+    document.getElementById('back-to-top')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    function showPopup() { document.getElementById('inquiry-popup')?.classList.remove('hidden'); }
+    function closePopup() { document.getElementById('inquiry-popup')?.classList.add('hidden'); }
+    document.getElementById('popup-form')?.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      try {
+        const res = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(formData))
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Thank you! We will contact you soon.');
+          closePopup();
+          form.reset();
+        } else {
+          alert(data.error || 'Failed to submit');
+        }
+      } catch (err) { alert('Error submitting form'); }
+    });
+  </script>
+</body>
+</html>`;
+}
+
 app.get('/', async (c) => {
   const db = new Database(c.env.DB);
   const settingsData = await db.getSettings();
@@ -502,32 +687,294 @@ app.get('/admin/*', async (c) => {
 });
 
 app.get('/products', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>Products</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><div class="container mx-auto px-4 py-8"><h1 class="text-3xl font-bold">Products Center</h1></div></body></html>');
+  const db = new Database(c.env.DB);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
+  const contactInfo = await db.getContactInfo();
+  const productsData = await db.getProducts(undefined, 1, 12);
+  const categories = await db.getCategories();
+
+  const content = `
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">Products Center</h1>
+        <p class="text-xl text-blue-100">Browse our quality products at wholesale prices</p>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <div class="mb-8">
+          <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg" onchange="filterProducts(this.value)">
+            <option value="">All Categories</option>
+            ${categories.map((c: any) => `<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          ${productsData.items.length > 0 ? productsData.items.map((p: any) => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+              <div class="h-48 bg-gray-200 flex items-center justify-center">
+                ${p.images ? `<img src="${JSON.parse(p.images)[0]}" alt="${p.name}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:package-variant" width="64" class="text-gray-400"></iconify-icon>'}
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-semibold mb-2">${p.name}</h3>
+                <p class="text-gray-600 text-sm mb-3">${p.short_description || ''}</p>
+                <div class="flex justify-between items-center">
+                  ${p.price ? `<span class="text-blue-600 font-bold">$${p.price}</span>` : ''}
+                  <a href="/product/${p.slug}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details</a>
+                </div>
+              </div>
+            </div>
+          `).join('') : '<p class="text-gray-500 col-span-full text-center py-8">No products found</p>'}
+        </div>
+        ${productsData.total > 12 ? `<div class="mt-8 text-center"><button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Load More</button></div>` : ''}
+      </div>
+    </section>
+  `;
+
+  return c.html(getPageLayout('Products', content, settingsData, socialLinks, contactInfo));
 });
 
 app.get('/solutions', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>Solutions</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><div class="container mx-auto px-4 py-8"><h1 class="text-3xl font-bold">Solutions</h1></div></body></html>');
+  const db = new Database(c.env.DB);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
+  const contactInfo = await db.getContactInfo();
+  const solutions = await db.getSolutions();
+
+  const content = `
+    <section class="bg-gradient-to-r from-green-600 to-green-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">Solutions</h1>
+        <p class="text-xl text-green-100">Industry-specific solutions for your business</p>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          ${solutions.length > 0 ? solutions.map((s: any) => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+              <div class="h-48 bg-gray-200 flex items-center justify-center">
+                ${s.images ? `<img src="${JSON.parse(s.images)[0]}" alt="${s.title}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:lightbulb-outline" width="64" class="text-gray-400"></iconify-icon>'}
+              </div>
+              <div class="p-6">
+                <h3 class="text-xl font-semibold mb-2">${s.title}</h3>
+                <p class="text-gray-600 mb-4">${s.short_description || ''}</p>
+                <a href="/solution/${s.slug}" class="text-green-600 hover:text-green-800 font-medium">Learn More →</a>
+              </div>
+            </div>
+          `).join('') : '<p class="text-gray-500 col-span-full text-center py-8">No solutions available</p>'}
+        </div>
+      </div>
+    </section>
+  `;
+
+  return c.html(getPageLayout('Solutions', content, settingsData, socialLinks, contactInfo));
 });
 
 app.get('/cases', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>Cases</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><div class="container mx-auto px-4 py-8"><h1 class="text-3xl font-bold">Cases</h1></div></body></html>');
+  const db = new Database(c.env.DB);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
+  const contactInfo = await db.getContactInfo();
+  const cases = await db.getCases();
+
+  const content = `
+    <section class="bg-gradient-to-r from-purple-600 to-purple-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">Success Cases</h1>
+        <p class="text-xl text-purple-100">See how we've helped our clients succeed</p>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <div class="space-y-8">
+          ${cases.length > 0 ? cases.map((item: any) => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition flex flex-col md:flex-row">
+              <div class="md:w-1/3 h-48 md:h-auto bg-gray-200 flex items-center justify-center">
+                ${item.images ? `<img src="${JSON.parse(item.images)[0]}" alt="${item.title}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:briefcase-outline" width="64" class="text-gray-400"></iconify-icon>'}
+              </div>
+              <div class="p-6 md:w-2/3">
+                <h3 class="text-xl font-semibold mb-2">${item.title}</h3>
+                ${item.client_name ? `<p class="text-gray-500 mb-2">Client: ${item.client_name}</p>` : ''}
+                ${item.industry ? `<p class="text-gray-500 mb-2">Industry: ${item.industry}</p>` : ''}
+                <p class="text-gray-600 mb-4">${item.short_description || item.challenge || ''}</p>
+                <a href="/case/${item.slug}" class="text-purple-600 hover:text-purple-800 font-medium">Read More →</a>
+              </div>
+            </div>
+          `).join('') : '<p class="text-gray-500 text-center py-8">No cases available</p>'}
+        </div>
+      </div>
+    </section>
+  `;
+
+  return c.html(getPageLayout('Cases', content, settingsData, socialLinks, contactInfo));
 });
 
 app.get('/news', async (c) => {
-  return c.html('<!DOCTYPE html><html><head><title>News</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><div class="container mx-auto px-4 py-8"><h1 class="text-3xl font-bold">News</h1></div></body></html>');
+  const db = new Database(c.env.DB);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
+  const contactInfo = await db.getContactInfo();
+  const newsData = await db.getNews(false, 1, 10);
+
+  const content = `
+    <section class="bg-gradient-to-r from-orange-600 to-orange-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">News & Updates</h1>
+        <p class="text-xl text-orange-100">Latest news and industry insights</p>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          ${newsData.items.length > 0 ? newsData.items.map((n: any) => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+              <div class="h-48 bg-gray-200 flex items-center justify-center">
+                ${n.images ? `<img src="${JSON.parse(n.images)[0]}" alt="${n.title}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:newspaper-variant-outline" width="64" class="text-gray-400"></iconify-icon>'}
+              </div>
+              <div class="p-6">
+                <p class="text-gray-500 text-sm mb-2">${n.published_at ? new Date(n.published_at).toLocaleDateString() : ''}</p>
+                <h3 class="text-lg font-semibold mb-2">${n.title}</h3>
+                <p class="text-gray-600 mb-4 line-clamp-3">${n.short_description || ''}</p>
+                <a href="/news/${n.slug}" class="text-orange-600 hover:text-orange-800 font-medium">Read More →</a>
+              </div>
+            </div>
+          `).join('') : '<p class="text-gray-500 col-span-full text-center py-8">No news available</p>'}
+        </div>
+      </div>
+    </section>
+  `;
+
+  return c.html(getPageLayout('News', content, settingsData, socialLinks, contactInfo));
 });
 
 app.get('/about', async (c) => {
   const db = new Database(c.env.DB);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
+  const contactInfo = await db.getContactInfo();
   const page = await db.getPageBySlug('about');
-  return c.html(`<!DOCTYPE html><html><head><title>${page?.meta_title || 'About Us'}</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><div class="container mx-auto px-4 py-8 max-w-3xl">${page?.content || '<h1>About Us</h1>'}</div></body></html>`);
+
+  const content = `
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">About Us</h1>
+        <p class="text-xl text-blue-100">Learn more about our company</p>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto">
+          ${page?.content || `
+            <div class="prose max-w-none">
+              <h2 class="text-2xl font-bold mb-4">Who We Are</h2>
+              <p class="text-gray-600 mb-6">We are a leading B2B wholesale provider dedicated to connecting buyers with quality manufacturers and suppliers worldwide.</p>
+              <h2 class="text-2xl font-bold mb-4">Our Mission</h2>
+              <p class="text-gray-600 mb-6">To provide businesses with access to high-quality products at competitive wholesale prices, backed by exceptional service.</p>
+              <h2 class="text-2xl font-bold mb-4">Why Choose Us</h2>
+              <ul class="list-disc list-inside text-gray-600 space-y-2">
+                <li>Quality products from verified suppliers</li>
+                <li>Competitive wholesale pricing</li>
+                <li>Global shipping to 100+ countries</li>
+                <li>24/7 customer support</li>
+              </ul>
+            </div>
+          `}
+        </div>
+      </div>
+    </section>
+  `;
+
+  return c.html(getPageLayout('About Us', content, settingsData, socialLinks, contactInfo));
 });
 
 app.get('/contact', async (c) => {
   const db = new Database(c.env.DB);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
   const contactInfo = await db.getContactInfo();
-  const contactHtml = contactInfo.map((i: any) => '<p class="text-lg">' + (i.label || i.type) + ': ' + i.value + '</p>').join('');
-  return c.html('<!DOCTYPE html><html><head><title>Contact Us</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><div class="container mx-auto px-4 py-8 max-w-3xl"><h1 class="text-3xl font-bold mb-6">Contact Us</h1><div class="space-y-4">' + contactHtml + '</div></div></body></html>');
+
+  const content = `
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">Contact Us</h1>
+        <p class="text-xl text-blue-100">We'd love to hear from you</p>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div>
+            <h2 class="text-2xl font-bold mb-6">Get In Touch</h2>
+            <div class="space-y-4">
+              ${contactInfo.map((i: any) => `
+                <div class="flex items-start gap-4">
+                  <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <iconify-icon icon="${getContactIcon(i.type)}" class="text-blue-600" width="24"></iconify-icon>
+                  </div>
+                  <div>
+                    <p class="font-medium">${i.label || i.type}</p>
+                    <p class="text-gray-600">${i.value}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-8">
+              <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+              <div class="flex gap-4">
+                ${socialLinks.map((s: any) => `<a href="${s.url}" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="20"></iconify-icon></a>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold mb-6">Send Us a Message</h2>
+            <form id="contact-form" class="space-y-4">
+              <div>
+                <label class="block font-medium mb-2">Name *</label>
+                <input type="text" name="name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block font-medium mb-2">Email *</label>
+                <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block font-medium mb-2">Company</label>
+                <input type="text" name="company" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="block font-medium mb-2">Message *</label>
+                <textarea name="message" required rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script>
+      document.getElementById('contact-form')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        try {
+          const res = await fetch('/api/inquiries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.fromEntries(formData))
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('Thank you! We will contact you soon.');
+            form.reset();
+          } else {
+            alert(data.error || 'Failed to send message');
+          }
+        } catch (err) { alert('Error sending message'); }
+      });
+    </script>
+  `;
+
+  return c.html(getPageLayout('Contact Us', content, settingsData, socialLinks, contactInfo));
 });
 
 app.notFound((c) => c.json({ success: false, error: 'Not Found' }, 404));

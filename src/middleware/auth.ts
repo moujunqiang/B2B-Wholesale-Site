@@ -1,7 +1,5 @@
 import { Context } from 'hono';
 import type { Env } from '../types';
-import { Database } from '../db';
-import { verifyPassword } from '../utils/auth';
 
 export async function authMiddleware(c: Context<{ Bindings: Env }>, next: () => Promise<void>) {
   const authHeader = c.req.header('Authorization');
@@ -13,20 +11,19 @@ export async function authMiddleware(c: Context<{ Bindings: Env }>, next: () => 
     return c.json({ success: false, error: 'Invalid credentials' }, 401);
   }
   const [username, password] = credentials;
-  
-  const db = new Database(c.env.DB);
-  const admin = await db.getAdminByUsername(username);
-  
-  if (!admin) {
+
+  const adminUsername = c.env.ADMIN_USERNAME;
+  const adminPassword = c.env.ADMIN_PASSWORD;
+
+  if (!adminUsername || !adminPassword) {
+    return c.json({ success: false, error: 'Admin not configured' }, 500);
+  }
+
+  if (username !== adminUsername || password !== adminPassword) {
     return c.json({ success: false, error: 'Invalid credentials' }, 401);
   }
-  
-  const valid = await verifyPassword(password, admin.password_hash);
-  if (!valid) {
-    return c.json({ success: false, error: 'Invalid credentials' }, 401);
-  }
-  
-  (c as any).set('admin', admin);
+
+  (c as any).set('admin', { id: 1, username: adminUsername, role: 'admin' });
   await next();
 }
 
@@ -36,13 +33,10 @@ export async function optionalAuthMiddleware(c: Context<{ Bindings: Env }>, next
     const credentials = atob(authHeader.slice(6)).split(':');
     if (credentials.length === 2) {
       const [username, password] = credentials;
-      const db = new Database(c.env.DB);
-      const admin = await db.getAdminByUsername(username);
-      if (admin) {
-        const valid = await verifyPassword(password, admin.password_hash);
-        if (valid) {
-          (c as any).set('admin', admin);
-        }
+      const adminUsername = c.env.ADMIN_USERNAME;
+      const adminPassword = c.env.ADMIN_PASSWORD;
+      if (username === adminUsername && password === adminPassword) {
+        (c as any).set('admin', { id: 1, username: adminUsername, role: 'admin' });
       }
     }
   }
