@@ -422,17 +422,17 @@ app.get('/admin/*', async (c) => {
   <div id="app">
     <div id="login-view" class="min-h-screen flex items-center justify-center">
       <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-center mb-6">Admin Login</h1>
+        <h1 class="text-2xl font-bold text-center mb-6" data-i18n="login.title">Admin Login</h1>
         <form id="login-form">
           <div class="mb-4">
-            <label for="username" class="block font-medium mb-2">Username</label>
+            <label for="username" class="block font-medium mb-2" data-i18n="login.username">Username</label>
             <input type="text" id="username" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
           </div>
           <div class="mb-6">
-            <label for="password" class="block font-medium mb-2">Password</label>
+            <label for="password" class="block font-medium mb-2" data-i18n="login.password">Password</label>
             <input type="password" id="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
           </div>
-          <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Login</button>
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition" data-i18n="login.loginBtn">Login</button>
         </form>
         <div id="login-error" class="error-message mt-4"></div>
       </div>
@@ -441,53 +441,59 @@ app.get('/admin/*', async (c) => {
       <aside class="sidebar bg-gray-900 text-white w-64 min-h-screen fixed">
         <h2 class="p-4 text-xl font-bold border-b border-gray-700">Admin Panel</h2>
         <nav class="admin-nav py-4">
-          <a href="#dashboard" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:tachometer"></iconify-icon> Dashboard</a>
-          <a href="#products" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:package-variant"></iconify-icon> Products</a>
-          <a href="#categories" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:tag-multiple"></iconify-icon> Categories</a>
-          <a href="#slides" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:image-multiple"></iconify-icon> Slides</a>
-          <a href="#solutions" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:lightbulb"></iconify-icon> Solutions</a>
-          <a href="#cases" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:briefcase"></iconify-icon> Cases</a>
-          <a href="#news" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:newspaper"></iconify-icon> News</a>
-          <a href="#pages" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:file-document"></iconify-icon> Pages</a>
-          <a href="#inquiries" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:email"></iconify-icon> Inquiries</a>
-          <a href="#leads" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:account-group"></iconify-icon> Leads</a>
-          <a href="#settings" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:cog"></iconify-icon> Settings</a>
-          <a href="#seo" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:magnify"></iconify-icon> SEO & JSON-LD</a>
-          <a href="#robots" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"><iconify-icon icon="mdi:robot"></iconify-icon> Robots.txt</a>
+          <a href="#dashboard" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.dashboard"><iconify-icon icon="mdi:tachometer"></iconify-icon> Dashboard</a>
+          <a href="#products" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.products"><iconify-icon icon="mdi:package-variant"></iconify-icon> Products</a>
+          <a href="#categories" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.categories"><iconify-icon icon="mdi:tag-multiple"></iconify-icon> Categories</a>
+          <a href="#slides" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.slides"><iconify-icon icon="mdi:image-multiple"></iconify-icon> Slides</a>
+          <a href="#solutions" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.solutions"><iconify-icon icon="mdi:lightbulb"></iconify-icon> Solutions</a>
+          <a href="#cases" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.cases"><iconify-icon icon="mdi:briefcase"></iconify-icon> Cases</a>
+          <a href="#news" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.news"><iconify-icon icon="mdi:newspaper"></iconify-icon> News</a>
+          <a href="#pages" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.pages"><iconify-icon icon="mdi:file-document"></iconify-icon> Pages</a>
+          <a href="#inquiries" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.inquiries"><iconify-icon icon="mdi:email"></iconify-icon> Inquiries</a>
+          <a href="#leads" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.leads"><iconify-icon icon="mdi:account-group"></iconify-icon> Leads</a>
+          <a href="#settings" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.settings"><iconify-icon icon="mdi:cog"></iconify-icon> Settings</a>
+          <a href="#seo" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.seo"><iconify-icon icon="mdi:magnify"></iconify-icon> SEO & JSON-LD</a>
+          <a href="#robots" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.robots"><iconify-icon icon="mdi:robot"></iconify-icon> Robots.txt</a>
         </nav>
       </aside>
       <main class="main-content ml-64 p-8">
         <header class="flex justify-between items-center mb-8">
           <h1 id="page-title" class="text-2xl font-bold">Dashboard</h1>
-          <button id="logout-btn" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100 transition">Logout</button>
+          <div class="flex items-center gap-4">
+            <select id="lang-select" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+            </select>
+            <button id="logout-btn" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100 transition" data-i18n="common.logout">Logout</button>
+          </div>
         </header>
         <div id="dashboard-page" class="page active">
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Total Products</h3><p id="stat-products" class="text-2xl font-bold">-</p></div>
-            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Total Inquiries</h3><p id="stat-inquiries" class="text-2xl font-bold">-</p></div>
-            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Pending Inquiries</h3><p id="stat-pending" class="text-2xl font-bold">-</p></div>
-            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Total Leads</h3><p id="stat-leads" class="text-2xl font-bold">-</p></div>
-            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Total Cases</h3><p id="stat-cases" class="text-2xl font-bold">-</p></div>
-            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Total News</h3><p id="stat-news" class="text-2xl font-bold">-</p></div>
+            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm" data-i18n="dashboard.totalProducts">Total Products</h3><p id="stat-products" class="text-2xl font-bold">-</p></div>
+            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm" data-i18n="dashboard.totalInquiries">Total Inquiries</h3><p id="stat-inquiries" class="text-2xl font-bold">-</p></div>
+            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm" data-i18n="dashboard.pendingInquiries">Pending Inquiries</h3><p id="stat-pending" class="text-2xl font-bold">-</p></div>
+            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm" data-i18n="dashboard.totalLeads">Total Leads</h3><p id="stat-leads" class="text-2xl font-bold">-</p></div>
+            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm" data-i18n="dashboard.totalCases">Total Cases</h3><p id="stat-cases" class="text-2xl font-bold">-</p></div>
+            <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm" data-i18n="dashboard.totalNews">Total News</h3><p id="stat-news" class="text-2xl font-bold">-</p></div>
           </div>
         </div>
-        <div id="products-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Products</h2><button id="add-product-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add Product</button></div><div id="product-table"></div></div>
-        <div id="categories-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Categories</h2><button id="add-category-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add Category</button></div><div id="category-table"></div></div>
-        <div id="slides-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Home Slides</h2><button id="add-slide-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add Slide</button></div><div id="slide-table"></div></div>
-        <div id="solutions-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Solutions</h2><button id="add-solution-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add Solution</button></div><div id="solution-table"></div></div>
-        <div id="cases-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Cases</h2><button id="add-case-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add Case</button></div><div id="case-table"></div></div>
-        <div id="news-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">News</h2><button id="add-news-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Add News</button></div><div id="news-table"></div></div>
-        <div id="pages-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Pages</h2></div><div id="pages-table"></div></div>
-        <div id="inquiries-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Inquiries</h2></div><div id="inquiry-table"></div></div>
-        <div id="leads-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Leads</h2></div><div id="leads-table"></div></div>
+        <div id="products-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="products.title">Products</h2><button id="add-product-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="products.addProduct">Add Product</button></div><div id="product-table"></div></div>
+        <div id="categories-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="categories.title">Categories</h2><button id="add-category-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="categories.addCategory">Add Category</button></div><div id="category-table"></div></div>
+        <div id="slides-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="slides.title">Slides</h2><button id="add-slide-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="slides.addSlide">Add Slide</button></div><div id="slide-table"></div></div>
+        <div id="solutions-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="solutions.title">Solutions</h2><button id="add-solution-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="solutions.addSolution">Add Solution</button></div><div id="solution-table"></div></div>
+        <div id="cases-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="cases.title">Cases</h2><button id="add-case-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="cases.addCase">Add Case</button></div><div id="case-table"></div></div>
+        <div id="news-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="news.title">News</h2><button id="add-news-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="news.addNews">Add News</button></div><div id="news-table"></div></div>
+        <div id="pages-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="pages.title">Pages</h2></div><div id="pages-table"></div></div>
+        <div id="inquiries-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="inquiries.title">Inquiries</h2></div><div id="inquiry-table"></div></div>
+        <div id="leads-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="leads.title">Leads</h2></div><div id="leads-table"></div></div>
         <div id="settings-page" class="page hidden">
-          <h2 class="text-xl font-semibold mb-4">General Settings</h2><form id="settings-form"></form>
-          <h2 class="text-xl font-semibold mt-8 mb-4">Popup Settings</h2><form id="popup-settings-form"></form>
-          <h2 class="text-xl font-semibold mt-8 mb-4">Social Links</h2><div id="social-links-form"></div>
-          <h2 class="text-xl font-semibold mt-8 mb-4">Contact Info</h2><div id="contact-info-form"></div>
+          <h2 class="text-xl font-semibold mb-4" data-i18n="settings.generalSettings">General Settings</h2><form id="settings-form"></form>
+          <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.popupSettings">Popup Settings</h2><form id="popup-settings-form"></form>
+          <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.socialLinks">Social Links</h2><div id="social-links-form"></div>
+          <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.contactInfo">Contact Info</h2><div id="contact-info-form"></div>
         </div>
-        <div id="seo-page" class="page hidden"><h2 class="text-xl font-semibold mb-4">JSON-LD Configuration</h2><div id="jsonld-form"></div></div>
-        <div id="robots-page" class="page hidden"><h2 class="text-xl font-semibold mb-4">Robots.txt Configuration</h2><div id="robots-form"></div><button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onclick="previewRobots()">Preview robots.txt</button></div>
+        <div id="seo-page" class="page hidden"><h2 class="text-xl font-semibold mb-4" data-i18n="seo.title">JSON-LD Configuration</h2><div id="jsonld-form"></div></div>
+        <div id="robots-page" class="page hidden"><h2 class="text-xl font-semibold mb-4" data-i18n="robots.title">Robots.txt Configuration</h2><div id="robots-form"></div><button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onclick="previewRobots()" data-i18n="robots.preview">Preview robots.txt</button></div>
       </main>
     </div>
   </div>

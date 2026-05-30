@@ -1,7 +1,81 @@
 let currentPage = 'dashboard';
 let credentials = null;
+let currentLang = localStorage.getItem('adminLang') || 'en';
+
+const translations = {
+  en: {
+    login: { title: 'Admin Login', username: 'Username', password: 'Password', loginBtn: 'Login', invalidCreds: 'Invalid username or password', loginFailed: 'Login failed. Please try again.' },
+    nav: { dashboard: 'Dashboard', products: 'Products', categories: 'Categories', slides: 'Slides', solutions: 'Solutions', cases: 'Cases', news: 'News', pages: 'Pages', inquiries: 'Inquiries', leads: 'Leads', settings: 'Settings', seo: 'SEO & JSON-LD', robots: 'Robots.txt' },
+    dashboard: { title: 'Dashboard', totalProducts: 'Total Products', totalInquiries: 'Total Inquiries', pendingInquiries: 'Pending Inquiries', totalLeads: 'Total Leads', totalCases: 'Total Cases', totalNews: 'Total News' },
+    common: { add: 'Add', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', actions: 'Actions', status: 'Status', active: 'Active', inactive: 'Inactive', active2: 'Active', inactive2: 'Inactive', featured: 'Featured', name: 'Name', title: 'Title', description: 'Description', image: 'Image', images: 'Images', url: 'URL', slug: 'Slug', sortOrder: 'Sort Order', selectCategory: 'Select Category', parent: 'Parent', noParent: 'No Parent', createdAt: 'Created', updatedAt: 'Updated', confirmDelete: 'Are you sure?', deleteSuccess: 'Deleted successfully', saveSuccess: 'Saved successfully', error: 'Error', loading: 'Loading...', noData: 'No data', viewAll: 'View All', addNew: 'Add New', uploadImage: 'Upload Image', imageUrl: 'Image URL', upload: 'Upload', logout: 'Logout' },
+    products: { title: 'Products', addProduct: 'Add Product', editProduct: 'Edit Product', productName: 'Product Name', shortDescription: 'Short Description', fullDescription: 'Full Description', price: 'Price', moq: 'MOQ (Min Order Qty)', category: 'Category', allCategories: 'All Categories', search: 'Search products...' },
+    categories: { title: 'Categories', addCategory: 'Add Category', editCategory: 'Edit Category', categoryName: 'Category Name', parentCategory: 'Parent Category' },
+    slides: { title: 'Slides', addSlide: 'Add Slide', editSlide: 'Edit Slide', slideTitle: 'Title', subtitle: 'Subtitle', slideDescription: 'Description', slideImage: 'Background Image', linkUrl: 'Link URL', linkText: 'Button Text' },
+    solutions: { title: 'Solutions', addSolution: 'Add Solution', editSolution: 'Edit Solution' },
+    cases: { title: 'Cases', addCase: 'Add Case', editCase: 'Edit Case', clientName: 'Client Name' },
+    news: { title: 'News', addNews: 'Add News', editNews: 'Edit News', content: 'Content', author: 'Author' },
+    pages: { title: 'Pages', editPage: 'Edit Page', metaTitle: 'Meta Title', metaDescription: 'Meta Description', content: 'Page Content' },
+    inquiries: { title: 'Inquiries', reply: 'Reply', replySubject: 'Reply Subject', replyMessage: 'Reply Message', sendReply: 'Send Reply', company: 'Company', phone: 'Phone', read: 'Read', unread: 'Unread', pending: 'Pending', completed: 'Completed' },
+    leads: { title: 'Leads', leadName: 'Name', phone: 'Phone', whatsapp: 'WhatsApp', message: 'Message' },
+    settings: { title: 'Settings', generalSettings: 'General Settings', siteName: 'Site Name', siteTitle: 'Site Title', siteDescription: 'Site Description', siteKeywords: 'Site Keywords', logoUrl: 'Logo URL', popupSettings: 'Popup Settings', enablePopup: 'Enable Popup', popupDelay: 'Delay (seconds)', popupTitle: 'Popup Title', popupDescription: 'Popup Description', socialLinks: 'Social Links', contactInfo: 'Contact Info', addSocial: 'Add Social Link', platform: 'Platform', socialUrl: 'URL', contactType: 'Type', contactValue: 'Value', contactLabel: 'Label', email: 'Email', phone2: 'Phone', whatsapp2: 'WhatsApp', saveSettings: 'Save Settings' },
+    seo: { title: 'JSON-LD Configuration', addConfig: 'Add Configuration', name: 'Name', schemaType: 'Schema Type', configValue: 'Configuration', extraData: 'Extra Data (JSON)' },
+    robots: { title: 'Robots.txt Configuration', addRule: 'Add Rule', userAgent: 'User Agent', rule: 'Rule', allow: 'Allow', disallow: 'Disallow', preview: 'Preview robots.txt', robotRules: 'Robot Rules' },
+    form: { required: 'Required', optional: 'Optional', selectOption: 'Select an option', enterText: 'Enter text', enterUrl: 'Enter URL', enterNumber: 'Enter number' }
+  },
+  zh: {
+    login: { title: '管理员登录', username: '用户名', password: '密码', loginBtn: '登录', invalidCreds: '用户名或密码错误', loginFailed: '登录失败，请重试' },
+    nav: { dashboard: '仪表盘', products: '产品', categories: '分类', slides: '幻灯片', solutions: '解决方案', cases: '案例', news: '新闻', pages: '页面', inquiries: '询盘', leads: '潜在客户', settings: '设置', seo: 'SEO 和 JSON-LD', robots: 'Robots.txt' },
+    dashboard: { title: '仪表盘', totalProducts: '产品总数', totalInquiries: '询盘总数', pendingInquiries: '待处理询盘', totalLeads: '潜在客户', totalCases: '案例总数', totalNews: '新闻总数' },
+    common: { add: '添加', edit: '编辑', delete: '删除', save: '保存', cancel: '取消', actions: '操作', status: '状态', active: '启用', inactive: '禁用', active2: '启用中', inactive2: '已禁用', featured: '推荐', name: '名称', title: '标题', description: '描述', image: '图片', images: '图片', url: '链接', slug: '别名', sortOrder: '排序', selectCategory: '选择分类', parent: '父级', noParent: '无父级', createdAt: '创建时间', updatedAt: '更新时间', confirmDelete: '确定要删除吗？', deleteSuccess: '删除成功', saveSuccess: '保存成功', error: '错误', loading: '加载中...', noData: '暂无数据', viewAll: '查看全部', addNew: '新增', uploadImage: '上传图片', imageUrl: '图片地址', upload: '上传', logout: '退出登录' },
+    products: { title: '产品', addProduct: '添加产品', editProduct: '编辑产品', productName: '产品名称', shortDescription: '简短描述', fullDescription: '完整描述', price: '价格', moq: '最小起订量', category: '分类', allCategories: '全部分类', search: '搜索产品...' },
+    categories: { title: '分类', addCategory: '添加分类', editCategory: '编辑分类', categoryName: '分类名称', parentCategory: '父级分类' },
+    slides: { title: '幻灯片', addSlide: '添加幻灯片', editSlide: '编辑幻灯片', slideTitle: '标题', subtitle: '副标题', slideDescription: '描述', slideImage: '背景图片', linkUrl: '链接地址', linkText: '按钮文字' },
+    solutions: { title: '解决方案', addSolution: '添加解决方案', editSolution: '编辑解决方案' },
+    cases: { title: '案例', addCase: '添加案例', editCase: '编辑案例', clientName: '客户名称' },
+    news: { title: '新闻', addNews: '添加新闻', editNews: '编辑新闻', content: '内容', author: '作者' },
+    pages: { title: '页面', editPage: '编辑页面', metaTitle: 'SEO 标题', metaDescription: 'SEO 描述', content: '页面内容' },
+    inquiries: { title: '询盘', reply: '回复', replySubject: '回复主题', replyMessage: '回复内容', sendReply: '发送回复', company: '公司', phone: '电话', read: '已读', unread: '未读', pending: '处理中', completed: '已完成' },
+    leads: { title: '潜在客户', leadName: '姓名', phone: '电话', whatsapp: 'WhatsApp', message: '留言' },
+    settings: { title: '设置', generalSettings: '基本设置', siteName: '网站名称', siteTitle: '网站标题', siteDescription: '网站描述', siteKeywords: '网站关键词', logoUrl: 'Logo 地址', popupSettings: '弹窗设置', enablePopup: '启用弹窗', popupDelay: '延迟时间（秒）', popupTitle: '弹窗标题', popupDescription: '弹窗描述', socialLinks: '社交媒体链接', contactInfo: '联系方式', addSocial: '添加社交链接', platform: '平台', socialUrl: '链接地址', contactType: '类型', contactValue: '值', contactLabel: '标签', email: '邮箱', phone2: '电话', whatsapp2: 'WhatsApp', saveSettings: '保存设置' },
+    seo: { title: 'JSON-LD 配置', addConfig: '添加配置', name: '名称', schemaType: 'Schema 类型', configValue: '配置内容', extraData: '额外数据 (JSON)' },
+    robots: { title: 'Robots.txt 配置', addRule: '添加规则', userAgent: '用户代理', rule: '规则', allow: '允许', disallow: '禁止', preview: '预览 robots.txt', robotRules: '爬虫规则' },
+    form: { required: '必填', optional: '选填', selectOption: '请选择', enterText: '请输入', enterUrl: '请输入链接', enterNumber: '请输入数字' }
+  }
+};
+
+function t(key) {
+  const keys = key.split('.');
+  let value = translations[currentLang];
+  for (const k of keys) {
+    value = value?.[k];
+  }
+  return value || key;
+}
+
+function applyTranslations() {
+  currentLang = localStorage.getItem('adminLang') || 'en';
+  $('#lang-select').val(currentLang);
+  
+  $('[data-i18n]').each(function() {
+    const key = $(this).attr('data-i18n');
+    const translated = t(key);
+    if ($(this).is('input[placeholder]')) {
+      $(this).attr('placeholder', translated);
+    } else {
+      $(this).text(translated);
+    }
+  });
+}
 
 $(document).ready(function() {
+  applyTranslations();
+  
+  $('#lang-select').on('change', function() {
+    currentLang = $(this).val();
+    localStorage.setItem('adminLang', currentLang);
+    location.reload();
+  });
+  
   const savedCreds = localStorage.getItem('adminCreds');
   if (savedCreds) {
     credentials = savedCreds;
@@ -25,10 +99,10 @@ $(document).ready(function() {
         localStorage.setItem('adminCreds', creds);
         showAdminView();
       } else {
-        $('#login-error').text('Invalid username or password').fadeIn();
+        $('#login-error').text(t('login.invalidCreds')).fadeIn();
       }
     } catch (err) {
-      $('#login-error').text('Login failed. Please try again.').fadeIn();
+      $('#login-error').text(t('login.loginFailed')).fadeIn();
     }
   });
   
@@ -48,6 +122,7 @@ $(document).ready(function() {
 function showAdminView() {
   $('#login-view').hide();
   $('#admin-view').removeClass('hidden').addClass('flex');
+  applyTranslations();
   loadDashboard();
 }
 
@@ -58,7 +133,8 @@ function switchPage(page) {
   $(`.nav-item[href="#${page}"]`).addClass('active');
   $(`#${page}-page`).removeClass('hidden').addClass('active');
   
-  $('#page-title').text(page.charAt(0).toUpperCase() + page.slice(1));
+  const titleKey = 'nav.' + page;
+  $('#page-title').text(t(titleKey));
   currentPage = page;
   
   if (page === 'products') loadProducts();
