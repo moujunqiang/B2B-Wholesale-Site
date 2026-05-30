@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     credentials = savedCreds;
     showAdminView();
   }
+  
+  if (document.getElementById('product-images-input')) {
+    document.getElementById('product-images-input').addEventListener('change', handleImageUpload);
+  }
 });
 
 document.getElementById('login-form')?.addEventListener('submit', async (e) => {
@@ -99,50 +103,47 @@ async function loadProducts(page = 1) {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
-    
-    if (data.success && data.data.items.length > 0) {
-      container.innerHTML = `
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>MOQ</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.data.items.map(p => `
-                <tr>
-                  <td>${p.id}</td>
-                  <td>${p.name}</td>
-                  <td>${p.price ? '$' + p.price : '-'}</td>
-                  <td>${p.min_order_qty}</td>
-                  <td><span class="badge ${p.is_active ? 'badge-active' : 'badge-inactive'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
-                  <td class="action-buttons">
-                    <button class="btn btn-sm" onclick="editProduct(${p.id})">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <button ${page === 1 ? 'disabled' : ''} onclick="loadProducts(${page - 1})">Previous</button>
-          <span>Page ${page} of ${data.data.totalPages}</span>
-          <button ${page >= data.data.totalPages ? 'disabled' : ''} onclick="loadProducts(${page + 1})">Next</button>
-        </div>
-      `;
-    } else {
-      container.innerHTML = '<p>No products found.</p>';
+    if (data.success) {
+      renderProductsTable(data.data.items);
     }
   } catch (err) {
-    container.innerHTML = '<p>Failed to load products.</p>';
+    console.error('Failed to load products');
   }
+}
+
+function renderProductsTable(products) {
+  const container = document.getElementById('product-table');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>MOQ</th>
+          <th>Featured</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${products.map(p => `
+          <tr>
+            <td>${p.id}</td>
+            <td>${p.name}</td>
+            <td>${p.price ? `$${p.price}` : '-'}</td>
+            <td>${p.min_order_qty}</td>
+            <td>${p.is_featured ? '✓' : '-'}</td>
+            <td>
+              <button class="btn btn-sm" onclick="editProduct(${p.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 async function loadCategories() {
@@ -154,100 +155,99 @@ async function loadCategories() {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
-    
-    if (data.success && data.data.length > 0) {
-      container.innerHTML = `
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.data.map(c => `
-                <tr>
-                  <td>${c.id}</td>
-                  <td>${c.name}</td>
-                  <td>${c.slug}</td>
-                  <td><span class="badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
-                  <td class="action-buttons">
-                    <button class="btn btn-sm" onclick="editCategory(${c.id})">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else {
-      container.innerHTML = '<p>No categories found.</p>';
+    if (data.success) {
+      renderCategoriesTable(data.data);
     }
   } catch (err) {
-    container.innerHTML = '<p>Failed to load categories.</p>';
+    console.error('Failed to load categories');
   }
 }
 
-async function loadInquiries(page = 1) {
+function renderCategoriesTable(categories) {
+  const container = document.getElementById('category-table');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Sort</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${categories.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.name}</td>
+            <td>${c.slug}</td>
+            <td>${c.sort_order}</td>
+            <td>
+              <button class="btn btn-sm" onclick="editCategory(${c.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function loadInquiries() {
   const container = document.getElementById('inquiry-table');
   if (!container) return;
   
   try {
-    const res = await fetch(`/api/inquiries?page=${page}&limit=20`, {
+    const res = await fetch('/api/inquiries?status=pending&limit=50', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
-    
-    if (data.success && data.data.items.length > 0) {
-      container.innerHTML = `
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Message</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.data.items.map(i => `
-                <tr>
-                  <td>${i.id}</td>
-                  <td>${i.name}</td>
-                  <td>${i.email}</td>
-                  <td>${i.message.slice(0, 50)}${i.message.length > 50 ? '...' : ''}</td>
-                  <td><span class="badge badge-${i.status}">${i.status}</span></td>
-                  <td>${new Date(i.created_at).toLocaleDateString()}</td>
-                  <td class="action-buttons">
-                    <button class="btn btn-sm" onclick="viewInquiry(${i.id})">View</button>
-                    <button class="btn btn-sm" onclick="updateInquiryStatus(${i.id}, 'replied')">Reply</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <button ${page === 1 ? 'disabled' : ''} onclick="loadInquiries(${page - 1})">Previous</button>
-          <span>Page ${page} of ${data.data.totalPages}</span>
-          <button ${page >= data.data.totalPages ? 'disabled' : ''} onclick="loadInquiries(${page + 1})">Next</button>
-        </div>
-      `;
-    } else {
-      container.innerHTML = '<p>No inquiries found.</p>';
+    if (data.success) {
+      renderInquiriesTable(data.data.items);
     }
   } catch (err) {
-    container.innerHTML = '<p>Failed to load inquiries.</p>';
+    console.error('Failed to load inquiries');
   }
+}
+
+function renderInquiriesTable(inquiries) {
+  const container = document.getElementById('inquiry-table');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Company</th>
+          <th>Message</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${inquiries.map(i => `
+          <tr>
+            <td>${new Date(i.created_at).toLocaleDateString()}</td>
+            <td>${i.name}</td>
+            <td>${i.email}</td>
+            <td>${i.company || '-'}</td>
+            <td>${i.message.substring(0, 50)}...</td>
+            <td>${i.status}</td>
+            <td>
+              <button class="btn btn-sm" onclick="viewInquiry(${i.id})">View</button>
+              <button class="btn btn-sm" onclick="markInquiryReplied(${i.id})">Mark Replied</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 async function loadSettings() {
@@ -255,88 +255,166 @@ async function loadSettings() {
   if (!container) return;
   
   try {
-    const res = await fetch('/api/settings');
+    const res = await fetch('/api/settings', {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
     const data = await res.json();
-    
     if (data.success) {
-      container.innerHTML = Object.entries(data.data).map(([key, value]) => `
-        <div class="form-group">
-          <label for="${key}">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
-          <input type="text" id="${key}" name="${key}" value="${value || ''}">
-        </div>
-      `).join('') + '<button type="submit" class="btn">Save Settings</button>';
-      
-      container.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const settings = Object.fromEntries(formData);
-        
-        for (const [key, value] of Object.entries(settings)) {
-          await fetch(`/api/settings/${key}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Basic ${credentials}`
-            },
-            body: JSON.stringify({ value })
-          });
-        }
-        alert('Settings saved successfully');
-      });
+      renderSettingsForm(data.data);
     }
   } catch (err) {
-    container.innerHTML = '<p>Failed to load settings.</p>';
+    console.error('Failed to load settings');
   }
 }
 
-async function deleteProduct(id) {
+function renderSettingsForm(settings) {
+  const container = document.getElementById('settings-form');
+  if (!container) return;
+  
+  const fields = [
+    { key: 'site_name', label: 'Site Name' },
+    { key: 'site_description', label: 'Site Description' },
+    { key: 'contact_email', label: 'Contact Email' },
+    { key: 'default_locale', label: 'Default Locale' },
+    { key: 'currency', label: 'Currency' },
+  ];
+  
+  container.innerHTML = `
+    <form id="settings-form-content">
+      ${fields.map(f => `
+        <div class="form-group">
+          <label for="${f.key}">${f.label}</label>
+          <input type="text" id="${f.key}" name="${f.key}" value="${settings[f.key] || ''}">
+        </div>
+      `).join('')}
+      <button type="submit" class="btn">Save Settings</button>
+    </form>
+  `;
+  
+  document.getElementById('settings-form-content')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      for (const [key, value] of Object.entries(data)) {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${credentials}`
+          },
+          body: JSON.stringify({ key, value })
+        });
+      }
+      alert('Settings saved successfully!');
+    } catch (err) {
+      alert('Failed to save settings');
+    }
+  });
+}
+
+window.deleteProduct = async function(id) {
   if (!confirm('Are you sure you want to delete this product?')) return;
   
-  await fetch(`/api/admin/products/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Basic ${credentials}` }
-  });
-  loadProducts();
-}
+  try {
+    await fetch(`/api/products/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    loadProducts();
+  } catch (err) {
+    alert('Failed to delete product');
+  }
+};
 
-async function deleteCategory(id) {
+window.deleteCategory = async function(id) {
   if (!confirm('Are you sure you want to delete this category?')) return;
   
-  await fetch(`/api/admin/categories/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Basic ${credentials}` }
-  });
-  loadCategories();
+  try {
+    await fetch(`/api/categories/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    loadCategories();
+  } catch (err) {
+    alert('Failed to delete category');
+  }
+};
+
+window.viewInquiry = async function(id) {
+  try {
+    const res = await fetch(`/api/inquiries/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const i = data.data;
+      alert(`Inquiry Details:\n\nName: ${i.name}\nEmail: ${i.email}\nCompany: ${i.company || 'N/A'}\nCountry: ${i.country || 'N/A'}\n\nMessage:\n${i.message}\n\nStatus: ${i.status}`);
+    }
+  } catch (err) {
+    alert('Failed to load inquiry details');
+  }
+};
+
+window.markInquiryReplied = async function(id) {
+  try {
+    await fetch(`/api/inquiries/${id}/status`, {
+      method: 'PATCH',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`
+      },
+      body: JSON.stringify({ status: 'replied' })
+    });
+    loadInquiries();
+  } catch (err) {
+    alert('Failed to update inquiry status');
+  }
+};
+
+async function handleImageUpload(e) {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  
+  const imageList = document.getElementById('uploaded-images-list');
+  if (!imageList) return;
+  
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await fetch('/api/upload/image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        },
+        body: formData
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        imageList.innerHTML += `
+          <div class="uploaded-image-item">
+            <img src="${data.data.url}" alt="Uploaded">
+            <input type="hidden" name="images" value="${data.data.url}">
+            <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        `;
+      } else {
+        alert(`Failed to upload: ${data.error}`);
+      }
+    } catch (err) {
+      alert('Failed to upload image');
+    }
+  }
 }
 
-async function updateInquiryStatus(id, status) {
-  await fetch(`/api/admin/inquiries/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${credentials}`
-    },
-    body: JSON.stringify({ status })
-  });
-  loadInquiries();
-}
+window.editProduct = function(id) {
+  alert('Product edit form will be implemented. ID: ' + id);
+};
 
-function viewInquiry(id) {
-  alert('View inquiry details - implement modal');
-}
-
-function editProduct(id) {
-  alert('Edit product - implement modal');
-}
-
-function editCategory(id) {
-  alert('Edit category - implement modal');
-}
-
-document.getElementById('add-product-btn')?.addEventListener('click', () => {
-  alert('Add product - implement modal');
-});
-
-document.getElementById('add-category-btn')?.addEventListener('click', () => {
-  alert('Add category - implement modal');
-});
+window.editCategory = function(id) {
+  alert('Category edit form will be implemented. ID: ' + id);
+};

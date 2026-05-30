@@ -7,7 +7,8 @@
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 execute b2b_wholesale_db --local --file=./src/db/schema.sql",
     "db:push": "wrangler d1 execute b2b_wholesale_db --remote --file=./src/db/schema.sql",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "hash:admin": "node scripts/generate-admin-hash.js"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20240117.0",

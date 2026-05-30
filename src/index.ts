@@ -9,7 +9,9 @@ import inquiries from './api/inquiries';
 import settings from './api/settings';
 import translations from './api/translations';
 import admin from './api/admin';
+import upload from './api/upload';
 import { authMiddleware } from './middleware/auth';
+import { Database } from './db';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -18,21 +20,38 @@ app.use('*', prettyJSON());
 app.use('/api/*', cors());
 
 app.use('/api/admin/*', authMiddleware);
+app.use('/api/upload/*', authMiddleware);
 
-app.get('/', (c) => {
+app.get('/', async (c) => {
+  const db = new Database(c.env.DB);
+  const settings = await db.getSettings();
+  const siteName = settings.site_name || 'B2B Wholesale';
+  const siteDescription = settings.site_description || 'Your trusted B2B wholesale platform';
+  
   return c.html(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B2B Wholesale Site</title>
+  <meta name="description" content="${siteDescription}">
+  <meta name="keywords" content="B2B, wholesale, bulk order, manufacturer, supplier">
+  <meta name="author" content="${siteName}">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="${siteName}">
+  <meta property="og:description" content="${siteDescription}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${siteName}">
+  <meta name="twitter:description" content="${siteDescription}">
+  <link rel="canonical" href="https://b2bwholesale.com/">
+  <title>${siteName} - ${siteDescription}</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <header class="header">
     <nav class="nav container">
-      <a href="/" class="logo">B2B Wholesale</a>
+      <a href="/" class="logo">${siteName}</a>
       <ul class="nav-links">
         <li><a href="/#products">Products</a></li>
         <li><a href="/#categories">Categories</a></li>
@@ -45,7 +64,7 @@ app.get('/', (c) => {
     <section class="hero">
       <div class="container">
         <h1>Your Trusted B2B Wholesale Partner</h1>
-        <p>Quality products at competitive prices</p>
+        <p>${siteDescription}</p>
         <a href="/#products" class="btn">Browse Products</a>
       </div>
     </section>
@@ -54,6 +73,7 @@ app.get('/', (c) => {
       <div class="container">
         <h2>Featured Products</h2>
         <div id="product-list" class="product-grid"></div>
+        <div id="pagination" class="pagination"></div>
       </div>
     </section>
 
@@ -96,7 +116,7 @@ app.get('/', (c) => {
 
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 B2B Wholesale. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} ${siteName}. All rights reserved.</p>
     </div>
   </footer>
 
@@ -106,12 +126,71 @@ app.get('/', (c) => {
   `);
 });
 
+app.get('/sitemap.xml', async (c) => {
+  const db = new Database(c.env.DB);
+  const products = await db.getProducts(undefined, 1, 1000);
+  const categories = await db.getCategories();
+  
+  const baseUrl = 'https://b2bwholesale.com';
+  
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  
+  xml += '  <url>\n';
+  xml += '    <loc>https://b2bwholesale.com/</loc>\n';
+  xml += '    <lastmod>2026-01-01</lastmod>';
+  xml += '    <changefreq>daily</changefreq>';
+  xml += '    <priority>1.0</priority>\n';
+  xml += '  </url>\n';
+  
+  for (const category of categories) {
+    xml += `  <url>\n`;
+    xml += `    <loc>${baseUrl}/category/${category.slug}</loc>\n`;
+    xml += `    <lastmod>${category.updated_at}</lastmod>\n`;
+    xml += `    <priority>0.8</priority>\n`;
+    xml += `  </url>\n`;
+  }
+  
+  for (const product of products.items) {
+    xml += `  <url>\n`;
+    xml += `    <loc>${baseUrl}/product/${product.slug}</loc>\n`;
+    xml += `    <lastmod>${product.updated_at}</lastmod>\n`;
+    xml += `    <priority>0.6</priority>\n`;
+    xml += `  </url>\n`;
+  }
+  
+  xml += '</urlset>';
+  
+  return new Response(xml, {
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+});
+
+app.get('/robots.txt', (c) => {
+  const robots = `User-agent: *
+Allow: /
+Disallow: /admin
+
+Sitemap: https://b2bwholesale.com/sitemap.xml`;
+  
+  return new Response(robots, {
+    headers: {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'public, max-age=86400',
+    },
+  });
+});
+
 app.route('/api/products', products);
 app.route('/api/categories', categories);
 app.route('/api/inquiries', inquiries);
 app.route('/api/settings', settings);
 app.route('/api/translations', translations);
 app.route('/api/admin', admin);
+app.route('/api/upload', upload);
 
 app.get('/admin/*', async (c) => {
   return c.html(`
@@ -120,6 +199,7 @@ app.get('/admin/*', async (c) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Admin Panel - B2B Wholesale</title>
   <link rel="stylesheet" href="/css/admin.css">
 </head>

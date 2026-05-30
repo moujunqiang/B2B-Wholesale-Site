@@ -95,7 +95,9 @@ INSERT INTO settings (key, value) VALUES
   ('site_description', 'Your trusted B2B wholesale platform'),
   ('contact_email', 'info@example.com'),
   ('default_locale', 'en'),
-  ('currency', 'USD');
+  ('currency', 'USD'),
+  ('email_notifications_enabled', 'true'),
+  ('admin_email', 'admin@example.com');
 
 INSERT INTO translations (locale, key, value) VALUES
   ('en', 'home', 'Home'),
