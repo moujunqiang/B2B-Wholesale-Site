@@ -152,13 +152,17 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 | 类型 | **R2 Bucket** |
 | Bucket | `b2b-wholesale-media` |
 
-#### 添加环境变量（可选）
+#### 添加环境变量（必需）
 
 | 变量名 | 值 |
 |--------|-----|
-| `EMAIL_API_KEY` | Mailchannels API Key |
-| `ADMIN_EMAIL` | 管理员邮箱 |
-| `SITE_URL` | 你的网站域名 |
+| `EMAIL_API_KEY` | Mailchannels API Key（可选，用于发送邮件通知） |
+| `ADMIN_EMAIL` | 管理员邮箱（可选） |
+| `SITE_URL` | 你的网站域名（可选） |
+| **`ADMIN_USERNAME`** | **管理员用户名（必需）** |
+| **`ADMIN_PASSWORD`** | **管理员密码（必需）** |
+
+> **注意**：管理员账号通过环境变量配置，不再使用数据库存储。
 
 ### 6. 自动部署
 
@@ -179,7 +183,7 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 ### 1. 访问后台管理
 
 1. 打开浏览器访问 `/admin`（如 `https://yourdomain.com/admin`）
-2. 输入管理员用户名和密码
+2. 使用环境变量中配置的管理员用户名和密码登录
 3. 登录后可管理所有内容
 
 ### 2. 基础设置
