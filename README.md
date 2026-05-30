@@ -154,15 +154,37 @@ INSERT INTO admins (username, password_hash, created_at) VALUES ('admin', '$2b$1
 
 #### 添加环境变量（必需）
 
+在 Worker 页面，点击 **Settings** > **Variables** > **Add variable**：
+
 | 变量名 | 值 |
 |--------|-----|
 | `EMAIL_API_KEY` | Mailchannels API Key（可选，用于发送邮件通知） |
 | `ADMIN_EMAIL` | 管理员邮箱（可选） |
 | `SITE_URL` | 你的网站域名（可选） |
-| **`ADMIN_USERNAME`** | **管理员用户名（必需）** |
-| **`ADMIN_PASSWORD`** | **管理员密码（必需）** |
+| `ADMIN_USERNAME` | 管理员用户名（必需） |
+| `ADMIN_PASSWORD` | 管理员密码（必需） |
 
 > **注意**：管理员账号通过环境变量配置，不再使用数据库存储。
+
+#### 更新 wrangler.toml（重要）
+
+在 `wrangler.toml` 中将 `database_id` 替换为你的 D1 数据库 ID：
+
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "b2b_wholesale_db"
+database_id = "你的-真实-database-id"  # 替换这里
+```
+
+### 6. 后台管理登录
+
+方式一：访问 `/admin` 并输入用户名密码
+方式二：URL 参数登录 `/admin?username=账号&password=密码`
+
+> **注意**：如果同步 Git 仓库后绑定消失，需要在 Dashboard 重新添加 D1 和 R2 绑定。
+
+### 7. 自动部署
 
 ### 6. 自动部署
 
