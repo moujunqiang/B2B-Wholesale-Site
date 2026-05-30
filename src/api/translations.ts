@@ -65,6 +65,19 @@ translations.post('/translate', async (c) => {
       return c.json({ success: false, error: 'Translation API not configured' }, 400);
     }
     
+    // 构建标准的翻译 API 请求（JSON 格式）
+    const requestBody: any = {
+      q: text,
+      source: source_locale,
+      target: target_locale,
+      format: 'text',
+    };
+    
+    // 移除空值
+    if (!requestBody.source) {
+      delete requestBody.source;
+    }
+    
     try {
       const response = await fetch(config.api_url, {
         method: 'POST',
@@ -72,22 +85,30 @@ translations.post('/translate', async (c) => {
           'Content-Type': 'application/json',
           ...(config.api_token ? { 'Authorization': `Bearer ${config.api_token}` } : {}),
         },
-        body: JSON.stringify({
-          text,
-          source_lang: source_locale,
-          target_lang: target_locale,
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
-        throw new Error(`API response status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({})) as any;
+        throw new Error(`API response status: ${response.status} - ${errorData.error || errorData.message || 'Unknown error'}`);
       }
       
       const result = await response.json() as any;
+      
+      // 支持多种翻译 API 的响应格式
+      const translatedText = 
+        result.translated_text || 
+        result.translation || 
+        result.data?.translations?.[0]?.translatedText ||
+        result.data?.[0]?.translations?.[0]?.translatedText ||
+        result.result ||
+        result.text ||
+        result;
+      
       return c.json({
         success: true,
         data: {
-          translated_text: result.translated_text || result.translation || result.data,
+          translated_text: typeof translatedText === 'string' ? translatedText : JSON.stringify(translatedText),
           source_locale,
           target_locale,
         },

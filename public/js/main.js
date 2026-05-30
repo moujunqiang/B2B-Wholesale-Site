@@ -73,12 +73,13 @@ window.switchLanguage = async function(targetLang) {
   const currentLang = window.currentLanguage || 'en';
   
   try {
+    // 先测试翻译 API 是否可用
     const res = await fetch('/api/translations/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: 'test',
-        source_locale: currentLang,
+        source_locale: currentLang === 'en' ? 'auto' : currentLang,
         target_locale: targetLang
       })
     });
@@ -93,12 +94,49 @@ window.switchLanguage = async function(targetLang) {
     $('#current-language').text(targetLang.toUpperCase());
     $('#language-dropdown').addClass('hidden');
     
-    alert('Language switched to ' + targetLang.toUpperCase() + '. Full page translation requires integration with a translation service.');
+    // 加载目标语言的翻译
+    await loadTranslations(targetLang);
+    
+    alert('语言已切换为 ' + (targetLang === 'zh' ? '中文' : targetLang.toUpperCase()));
   } catch (err) {
     alert('翻译 API 接口错误，请联系管理员配置正确的参数');
     console.error('Switch language error:', err);
   }
 };
+
+// 加载翻译文本
+async function loadTranslations(locale) {
+  try {
+    const res = await fetch(`/api/translations/${locale}`);
+    const data = await res.json();
+    if (data.success && data.data) {
+      const translations = data.data;
+      const translationsMap = {};
+      
+      translations.forEach((t: any) => {
+        translationsMap[t.key] = t.value;
+      });
+      
+      // 更新所有带 data-i18n 属性的元素
+      $('[data-i18n]').each(function() {
+        const key = $(this).attr('data-i18n');
+        if (translationsMap[key]) {
+          $(this).text(translationsMap[key]);
+        }
+      });
+      
+      // 更新 placeholder
+      $('[data-i18n-placeholder]').each(function() {
+        const key = $(this).attr('data-i18n-placeholder');
+        if (translationsMap[key]) {
+          $(this).attr('placeholder', translationsMap[key]);
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Load translations error:', err);
+  }
+}
 
 let popupShown = false;
 let currentSlide = 0;
