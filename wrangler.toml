@@ -4,3 +4,16 @@ compatibility_date = "2024-01-01"
 
 [assets]
 directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "b2b_wholesale_db"
+database_id = "b2b_wholesale_db"
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "b2b-wholesale-media"
+
+[vars]
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
