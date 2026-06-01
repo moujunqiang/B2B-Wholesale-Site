@@ -83,6 +83,93 @@ admin.delete('/categories/:id', async (c) => {
   return c.json({ success: true, message: 'Category deleted' });
 });
 
+admin.post('/solutions', async (c) => {
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const id = await db.createSolution({ ...body, slug });
+  return c.json({ success: true, data: { id }, message: 'Solution created' }, 201);
+});
+
+admin.put('/solutions/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  const updated = await db.updateSolution(id, body);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'Solution updated' });
+});
+
+admin.delete('/solutions/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const deleted = await db.deleteSolution(id);
+  if (!deleted) {
+    return c.json({ success: false, error: 'Failed to delete' }, 500);
+  }
+  return c.json({ success: true, message: 'Solution deleted' });
+});
+
+admin.post('/cases', async (c) => {
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const id = await db.createCase({ ...body, slug });
+  return c.json({ success: true, data: { id }, message: 'Case created' }, 201);
+});
+
+admin.put('/cases/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  const updated = await db.updateCase(id, body);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'Case updated' });
+});
+
+admin.delete('/cases/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const deleted = await db.deleteCase(id);
+  if (!deleted) {
+    return c.json({ success: false, error: 'Failed to delete' }, 500);
+  }
+  return c.json({ success: true, message: 'Case deleted' });
+});
+
+admin.post('/news', async (c) => {
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const id = await db.createNews({ ...body, slug });
+  return c.json({ success: true, data: { id }, message: 'News created' }, 201);
+});
+
+admin.put('/news/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  const updated = await db.updateNews(id, body);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'News updated' });
+});
+
+admin.delete('/news/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const deleted = await db.deleteNews(id);
+  if (!deleted) {
+    return c.json({ success: false, error: 'Failed to delete' }, 500);
+  }
+  return c.json({ success: true, message: 'News deleted' });
+});
+
 admin.get('/inquiries', async (c) => {
   const db = new Database(c.env.DB);
   const status = c.req.query('status') || undefined;

@@ -138,8 +138,14 @@ function switchPage(page) {
   $('#page-title').text(t(titleKey));
   currentPage = page;
   
-  if (page === 'products') loadProducts();
-  else if (page === 'categories') loadCategories();
+  if (page === 'products') {
+    loadProducts();
+    $('#add-product-btn').off('click').on('click', showAddProductModal);
+  }
+  else if (page === 'categories') {
+    loadCategories();
+    $('#add-category-btn').off('click').on('click', showAddCategoryModal);
+  }
   else if (page === 'solutions') loadSolutions();
   else if (page === 'cases') loadCases();
   else if (page === 'news') loadNews();
@@ -210,7 +216,7 @@ function renderProductsTable(products) {
             <td>${p.min_order_qty}</td>
             <td>${p.is_featured ? '✓' : '-'}</td>
             <td>
-              <button class="btn btn-sm btn-warning" onclick="alert('Edit feature coming soon')">Edit</button>
+              <button class="btn btn-sm btn-warning" onclick="editProduct(${p.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
             </td>
           </tr>
@@ -862,11 +868,156 @@ window.deleteContactInfo = async function(id) {
   }
 };
 
+// Product CRUD Modal Functions
+window.showAddProductModal = function() {
+  showProductModal();
+};
+
+window.editProduct = async function(id) {
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showProductModal(data.data);
+    }
+  } catch (err) {
+    alert('Failed to load product');
+  }
+};
+
+function showProductModal(product = null) {
+  const modalHtml = `
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">${product ? t('products.editProduct') : t('products.addProduct')}</h3>
+        <form id="product-form">
+          <input type="hidden" name="id" value="${product?.id || ''}">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-medium mb-1">${t('products.productName')}</label>
+              <input type="text" name="name" value="${product?.name || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Slug</label>
+              <input type="text" name="slug" value="${product?.slug || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">${t('products.shortDescription')}</label>
+              <textarea name="short_description" rows="2" class="w-full px-3 py-2 border rounded">${product?.short_description || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">${t('products.fullDescription')}</label>
+              <textarea name="description" rows="4" class="w-full px-3 py-2 border rounded">${product?.description || ''}</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block font-medium mb-1">${t('products.price')}</label>
+                <input type="number" step="0.01" name="price" value="${product?.price || ''}" class="w-full px-3 py-2 border rounded">
+              </div>
+              <div>
+                <label class="block font-medium mb-1">${t('products.moq')}</label>
+                <input type="number" name="min_order_qty" value="${product?.min_order_qty || 1}" class="w-full px-3 py-2 border rounded">
+              </div>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">${t('products.category')}</label>
+              <select name="category_id" class="w-full px-3 py-2 border rounded">
+                <option value="">${t('products.allCategories')}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Images (URLs, comma separated)</label>
+              <textarea name="images" rows="2" class="w-full px-3 py-2 border rounded">${product?.images ? product.images.join(',') : ''}</textarea>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" ${product?.is_featured ? 'checked' : ''}>
+                <span>${t('common.featured')}</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" onclick="closeProductModal()" class="btn">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modalHtml);
+  loadCategoriesForSelect();
+  
+  $('#product-form').off('submit').on('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+    
+    // Parse images
+    if (data.images) {
+      data.images = data.images.split(',').map(s => s.trim()).filter(s => s);
+    }
+    
+    // Convert types
+    data.min_order_qty = parseInt(data.min_order_qty) || 1;
+    data.price = parseFloat(data.price) || null;
+    data.is_featured = data.is_featured ? 1 : 0;
+    data.category_id = data.category_id ? parseInt(data.category_id) : null;
+    
+    try {
+      const response = await fetch(id ? `/api/admin/products/${id}` : '/api/admin/products', {
+        method: id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert(t('common.saveSuccess'));
+        closeProductModal();
+        loadProducts();
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Save failed');
+      }
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  });
+}
+
+window.closeProductModal = function() {
+  $('#product-modal').remove();
+};
+
+async function loadCategoriesForSelect() {
+  try {
+    const res = await fetch('/api/categories', {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const options = data.data.items.map((c) => 
+        `<option value="${c.id}">${c.name}</option>`
+      ).join('');
+      $('select[name="category_id"]').append(options);
+    }
+  } catch (err) {
+    console.error('Failed to load categories');
+  }
+}
+
 window.deleteProduct = async function(id) {
   if (!confirm('Are you sure you want to delete this product?')) return;
   
   try {
-    await fetch(`/api/products/${id}`, {
+    await fetch(`/api/admin/products/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Basic ${credentials}` }
     });
@@ -880,7 +1031,7 @@ window.deleteCategory = async function(id) {
   if (!confirm('Are you sure you want to delete this category?')) return;
   
   try {
-    await fetch(`/api/categories/${id}`, {
+    await fetch(`/api/admin/categories/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Basic ${credentials}` }
     });
@@ -889,6 +1040,116 @@ window.deleteCategory = async function(id) {
     alert('Failed to delete category');
   }
 };
+
+// Category CRUD Modal Functions
+window.showAddCategoryModal = function() {
+  showCategoryModal();
+};
+
+function showCategoryModal(category = null) {
+  const modalHtml = `
+    <div id="category-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-xl w-full">
+        <h3 class="text-xl font-bold mb-4">${category ? t('categories.editCategory') : t('categories.addCategory')}</h3>
+        <form id="category-form">
+          <input type="hidden" name="id" value="${category?.id || ''}">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-medium mb-1">${t('categories.categoryName')}</label>
+              <input type="text" name="name" value="${category?.name || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Slug</label>
+              <input type="text" name="slug" value="${category?.slug || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Description</label>
+              <textarea name="description" rows="3" class="w-full px-3 py-2 border rounded">${category?.description || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">${t('common.parent')}</label>
+              <select name="parent_id" class="w-full px-3 py-2 border rounded">
+                <option value="">${t('common.noParent')}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">${t('common.sortOrder')}</label>
+              <input type="number" name="sort_order" value="${category?.sort_order || 0}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_active" ${category?.is_active !== 0 ? 'checked' : ''}>
+                <span>${t('common.active')}</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" onclick="closeCategoryModal()" class="btn">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modalHtml);
+  loadCategoriesForParentSelect();
+  
+  $('#category-form').off('submit').on('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+    
+    data.sort_order = parseInt(data.sort_order) || 0;
+    data.is_active = data.is_active ? 1 : 0;
+    data.parent_id = data.parent_id ? parseInt(data.parent_id) : null;
+    
+    try {
+      const response = await fetch(id ? `/api/admin/categories/${id}` : '/api/admin/categories', {
+        method: id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert(t('common.saveSuccess'));
+        closeCategoryModal();
+        loadCategories();
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Save failed');
+      }
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  });
+}
+
+window.closeCategoryModal = function() {
+  $('#category-modal').remove();
+};
+
+async function loadCategoriesForParentSelect() {
+  try {
+    const res = await fetch('/api/categories', {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const options = data.data.items.map((c) => 
+        `<option value="${c.id}">${c.name}</option>`
+      ).join('');
+      $('select[name="parent_id"]').append(options);
+    }
+  } catch (err) {
+    console.error('Failed to load categories');
+  }
+}
 
 window.deleteSolution = async function(id) {
   if (!confirm('Are you sure you want to delete this solution?')) return;
