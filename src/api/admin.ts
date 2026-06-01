@@ -209,6 +209,34 @@ admin.patch('/inquiries/:id', async (c) => {
   return c.json({ success: true, message: 'Inquiry updated' });
 });
 
+admin.post('/pages', async (c) => {
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  const id = await db.createPage(body);
+  return c.json({ success: true, data: { id }, message: 'Page created' }, 201);
+});
+
+admin.put('/pages/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  const updated = await db.updatePage(id, body);
+  if (!updated) {
+    return c.json({ success: false, error: 'Failed to update' }, 500);
+  }
+  return c.json({ success: true, message: 'Page updated' });
+});
+
+admin.delete('/pages/:id', async (c) => {
+  const db = new Database(c.env.DB);
+  const id = parseInt(c.req.param('id'));
+  const deleted = await db.deletePage(id);
+  if (!deleted) {
+    return c.json({ success: false, error: 'Failed to delete' }, 500);
+  }
+  return c.json({ success: true, message: 'Page deleted' });
+});
+
 admin.get('/stats', async (c) => {
   const db = new Database(c.env.DB);
   const [products, inquiries, pending] = await Promise.all([

@@ -146,9 +146,18 @@ function switchPage(page) {
     loadCategories();
     $('#add-category-btn').off('click').on('click', showAddCategoryModal);
   }
-  else if (page === 'solutions') loadSolutions();
-  else if (page === 'cases') loadCases();
-  else if (page === 'news') loadNews();
+  else if (page === 'solutions') {
+    loadSolutions();
+    $('#add-solution-btn').off('click').on('click', showAddSolutionModal);
+  }
+  else if (page === 'cases') {
+    loadCases();
+    $('#add-case-btn').off('click').on('click', showAddCaseModal);
+  }
+  else if (page === 'news') {
+    loadNews();
+    $('#add-news-btn').off('click').on('click', showAddNewsModal);
+  }
   else if (page === 'pages') loadPages();
   else if (page === 'inquiries') loadInquiries();
   else if (page === 'leads') loadLeads();
@@ -314,7 +323,7 @@ function renderSolutionsTable(solutions) {
             <td>${s.title}</td>
             <td>${s.is_featured ? '✓' : '-'}</td>
             <td>
-              <button class="btn btn-sm btn-warning">Edit</button>
+              <button class="btn btn-sm btn-warning" onclick="editSolution(${s.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteSolution(${s.id})">Delete</button>
             </td>
           </tr>
@@ -364,7 +373,7 @@ function renderCasesTable(cases) {
             <td>${c.client_name || '-'}</td>
             <td>${c.is_featured ? '✓' : '-'}</td>
             <td>
-              <button class="btn btn-sm btn-warning">Edit</button>
+              <button class="btn btn-sm btn-warning" onclick="editCase(${c.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteCase(${c.id})">Delete</button>
             </td>
           </tr>
@@ -414,7 +423,7 @@ function renderNewsTable(news) {
             <td>${n.author || '-'}</td>
             <td>${n.view_count}</td>
             <td>
-              <button class="btn btn-sm btn-warning">Edit</button>
+              <button class="btn btn-sm btn-warning" onclick="editNews(${n.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteNews(${n.id})">Delete</button>
             </td>
           </tr>
@@ -462,7 +471,8 @@ function renderPagesTable(pages) {
             <td>${p.title}</td>
             <td>${p.slug}</td>
             <td>
-              <button class="btn btn-sm btn-warning">Edit</button>
+              <button class="btn btn-sm btn-warning" onclick="editPage(${p.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deletePage(${p.id})">Delete</button>
             </td>
           </tr>
         `).join('')}
@@ -1155,7 +1165,7 @@ window.deleteSolution = async function(id) {
   if (!confirm('Are you sure you want to delete this solution?')) return;
   
   try {
-    await fetch(`/api/solutions/${id}`, {
+    await fetch(`/api/admin/solutions/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Basic ${credentials}` }
     });
@@ -1169,7 +1179,7 @@ window.deleteCase = async function(id) {
   if (!confirm('Are you sure you want to delete this case?')) return;
   
   try {
-    await fetch(`/api/cases/${id}`, {
+    await fetch(`/api/admin/cases/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Basic ${credentials}` }
     });
@@ -1183,13 +1193,27 @@ window.deleteNews = async function(id) {
   if (!confirm('Are you sure you want to delete this news?')) return;
   
   try {
-    await fetch(`/api/news/${id}`, {
+    await fetch(`/api/admin/news/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     loadNews();
   } catch (err) {
     alert('Failed to delete news');
+  }
+};
+
+window.deletePage = async function(id) {
+  if (!confirm('Are you sure you want to delete this page?')) return;
+  
+  try {
+    await fetch(`/api/admin/pages/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    loadPages();
+  } catch (err) {
+    alert('Failed to delete page');
   }
 };
 
@@ -1253,6 +1277,464 @@ window.markLeadContacted = async function(id) {
   } catch (err) {
     alert('Failed to update lead status');
   }
+};
+
+// Solution CRUD Modal Functions
+window.showAddSolutionModal = function() {
+  showSolutionModal();
+};
+
+window.editSolution = async function(id) {
+  try {
+    const res = await fetch(`/api/solutions/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showSolutionModal(data.data);
+    }
+  } catch (err) {
+    alert('Failed to load solution');
+  }
+};
+
+function showSolutionModal(solution = null) {
+  const modalHtml = `
+    <div id="solution-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">${solution ? t('solutions.editSolution') : t('solutions.addSolution')}</h3>
+        <form id="solution-form">
+          <input type="hidden" name="id" value="${solution?.id || ''}">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-medium mb-1">Title</label>
+              <input type="text" name="title" value="${solution?.title || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Slug</label>
+              <input type="text" name="slug" value="${solution?.slug || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Short Description</label>
+              <textarea name="short_description" rows="2" class="w-full px-3 py-2 border rounded">${solution?.short_description || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Content</label>
+              <textarea name="content" rows="6" class="w-full px-3 py-2 border rounded">${solution?.content || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Industries</label>
+              <input type="text" name="industries" value="${solution?.industries || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Images (URLs, comma separated)</label>
+              <textarea name="images" rows="2" class="w-full px-3 py-2 border rounded">${solution?.images ? solution.images.join(',') : ''}</textarea>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" ${solution?.is_featured ? 'checked' : ''}>
+                <span>Featured</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_active" ${solution?.is_active !== 0 ? 'checked' : ''}>
+                <span>Active</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" onclick="closeSolutionModal()" class="btn">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modalHtml);
+  
+  $('#solution-form').off('submit').on('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+    
+    if (data.images) {
+      data.images = data.images.split(',').map(s => s.trim()).filter(s => s);
+    }
+    data.is_featured = data.is_featured ? 1 : 0;
+    data.is_active = data.is_active ? 1 : 0;
+    
+    try {
+      const response = await fetch(id ? `/api/admin/solutions/${id}` : '/api/admin/solutions', {
+        method: id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert(t('common.saveSuccess'));
+        closeSolutionModal();
+        loadSolutions();
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Save failed');
+      }
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  });
+}
+
+window.closeSolutionModal = function() {
+  $('#solution-modal').remove();
+};
+
+// Case CRUD Modal Functions
+window.showAddCaseModal = function() {
+  showCaseModal();
+};
+
+window.editCase = async function(id) {
+  try {
+    const res = await fetch(`/api/cases/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showCaseModal(data.data);
+    }
+  } catch (err) {
+    alert('Failed to load case');
+  }
+};
+
+function showCaseModal(caseItem = null) {
+  const modalHtml = `
+    <div id="case-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">${caseItem ? t('cases.editCase') : t('cases.addCase')}</h3>
+        <form id="case-form">
+          <input type="hidden" name="id" value="${caseItem?.id || ''}">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-medium mb-1">Title</label>
+              <input type="text" name="title" value="${caseItem?.title || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Slug</label>
+              <input type="text" name="slug" value="${caseItem?.slug || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Client Name</label>
+              <input type="text" name="client_name" value="${caseItem?.client_name || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Industry</label>
+              <input type="text" name="industry" value="${caseItem?.industry || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Challenge</label>
+              <textarea name="challenge" rows="3" class="w-full px-3 py-2 border rounded">${caseItem?.challenge || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Solution</label>
+              <textarea name="solution" rows="3" class="w-full px-3 py-2 border rounded">${caseItem?.solution || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Results</label>
+              <textarea name="results" rows="3" class="w-full px-3 py-2 border rounded">${caseItem?.results || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Testimonial</label>
+              <textarea name="testimonial" rows="3" class="w-full px-3 py-2 border rounded">${caseItem?.testimonial || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Images (URLs, comma separated)</label>
+              <textarea name="images" rows="2" class="w-full px-3 py-2 border rounded">${caseItem?.images ? caseItem.images.join(',') : ''}</textarea>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" ${caseItem?.is_featured ? 'checked' : ''}>
+                <span>Featured</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_active" ${caseItem?.is_active !== 0 ? 'checked' : ''}>
+                <span>Active</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" onclick="closeCaseModal()" class="btn">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modalHtml);
+  
+  $('#case-form').off('submit').on('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+    
+    if (data.images) {
+      data.images = data.images.split(',').map(s => s.trim()).filter(s => s);
+    }
+    data.is_featured = data.is_featured ? 1 : 0;
+    data.is_active = data.is_active ? 1 : 0;
+    
+    try {
+      const response = await fetch(id ? `/api/admin/cases/${id}` : '/api/admin/cases', {
+        method: id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert(t('common.saveSuccess'));
+        closeCaseModal();
+        loadCases();
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Save failed');
+      }
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  });
+}
+
+window.closeCaseModal = function() {
+  $('#case-modal').remove();
+};
+
+// News CRUD Modal Functions
+window.showAddNewsModal = function() {
+  showNewsModal();
+};
+
+window.editNews = async function(id) {
+  try {
+    const res = await fetch(`/api/news/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showNewsModal(data.data);
+    }
+  } catch (err) {
+    alert('Failed to load news');
+  }
+};
+
+function showNewsModal(newsItem = null) {
+  const modalHtml = `
+    <div id="news-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">${newsItem ? t('news.editNews') : t('news.addNews')}</h3>
+        <form id="news-form">
+          <input type="hidden" name="id" value="${newsItem?.id || ''}">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-medium mb-1">Title</label>
+              <input type="text" name="title" value="${newsItem?.title || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Slug</label>
+              <input type="text" name="slug" value="${newsItem?.slug || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Short Description</label>
+              <textarea name="short_description" rows="2" class="w-full px-3 py-2 border rounded">${newsItem?.short_description || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Content</label>
+              <textarea name="content" rows="6" class="w-full px-3 py-2 border rounded">${newsItem?.content || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Author</label>
+              <input type="text" name="author" value="${newsItem?.author || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Images (URLs, comma separated)</label>
+              <textarea name="images" rows="2" class="w-full px-3 py-2 border rounded">${newsItem?.images ? newsItem.images.join(',') : ''}</textarea>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" ${newsItem?.is_featured ? 'checked' : ''}>
+                <span>Featured</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_active" ${newsItem?.is_active !== 0 ? 'checked' : ''}>
+                <span>Active</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" onclick="closeNewsModal()" class="btn">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modalHtml);
+  
+  $('#news-form').off('submit').on('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+    
+    if (data.images) {
+      data.images = data.images.split(',').map(s => s.trim()).filter(s => s);
+    }
+    data.is_featured = data.is_featured ? 1 : 0;
+    data.is_active = data.is_active ? 1 : 0;
+    
+    try {
+      const response = await fetch(id ? `/api/admin/news/${id}` : '/api/admin/news', {
+        method: id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert(t('common.saveSuccess'));
+        closeNewsModal();
+        loadNews();
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Save failed');
+      }
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  });
+}
+
+window.closeNewsModal = function() {
+  $('#news-modal').remove();
+};
+
+// Page CRUD Modal Functions
+window.editPage = async function(id) {
+  try {
+    const res = await fetch(`/api/pages/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showPageModal(data.data);
+    }
+  } catch (err) {
+    alert('Failed to load page');
+  }
+};
+
+function showPageModal(page = null) {
+  const modalHtml = `
+    <div id="page-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">${page ? t('pages.editPage') : 'Add Page'}</h3>
+        <form id="page-form">
+          <input type="hidden" name="id" value="${page?.id || ''}">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-medium mb-1">Title</label>
+              <input type="text" name="title" value="${page?.title || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Slug</label>
+              <input type="text" name="slug" value="${page?.slug || ''}" required class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Meta Title</label>
+              <input type="text" name="meta_title" value="${page?.meta_title || ''}" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Meta Description</label>
+              <textarea name="meta_description" rows="2" class="w-full px-3 py-2 border rounded">${page?.meta_description || ''}</textarea>
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Content</label>
+              <textarea name="content" rows="8" class="w-full px-3 py-2 border rounded">${page?.content || ''}</textarea>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_active" ${page?.is_active !== 0 ? 'checked' : ''}>
+                <span>Active</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" onclick="closePageModal()" class="btn">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modalHtml);
+  
+  $('#page-form').off('submit').on('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+    
+    data.is_active = data.is_active ? 1 : 0;
+    
+    try {
+      const response = await fetch(id ? `/api/admin/pages/${id}` : '/api/admin/pages', {
+        method: id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert(t('common.saveSuccess'));
+        closePageModal();
+        loadPages();
+      } else {
+        const result = await response.json();
+        alert(result.error || 'Save failed');
+      }
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  });
+}
+
+window.closePageModal = function() {
+  $('#page-modal').remove();
 };
 
 // Translation Settings
