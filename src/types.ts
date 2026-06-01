@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   R2_BUCKET: R2Bucket;
+  ASSETS?: Fetcher;
   EMAIL_API_KEY?: string;
   ADMIN_EMAIL?: string;
   ADMIN_USERNAME?: string;

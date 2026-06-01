@@ -23,6 +23,40 @@ import { Database, generateRobotsTxt, generateLLMsTxt } from './db';
 
 const app = new Hono<{ Bindings: Env }>();
 
+// Static files handler - must be registered before other routes
+app.get('/js/*', async (c) => {
+  if (c.env.ASSETS) {
+    const assetPath = c.req.path;
+    const asset = await c.env.ASSETS.fetch(new Request(`https://example.com${assetPath}`));
+    if (asset.status === 200) {
+      return asset;
+    }
+  }
+  return c.notFound();
+});
+
+app.get('/css/*', async (c) => {
+  if (c.env.ASSETS) {
+    const assetPath = c.req.path;
+    const asset = await c.env.ASSETS.fetch(new Request(`https://example.com${assetPath}`));
+    if (asset.status === 200) {
+      return asset;
+    }
+  }
+  return c.notFound();
+});
+
+app.get('/images/*', async (c) => {
+  if (c.env.ASSETS) {
+    const assetPath = c.req.path;
+    const asset = await c.env.ASSETS.fetch(new Request(`https://example.com${assetPath}`));
+    if (asset.status === 200) {
+      return asset;
+    }
+  }
+  return c.notFound();
+});
+
 app.use('*', logger());
 app.use('*', prettyJSON());
 app.use('/api/*', cors());
