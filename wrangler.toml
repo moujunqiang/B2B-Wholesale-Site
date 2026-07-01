@@ -8,7 +8,7 @@ directory = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "b2b_wholesale_db"
-database_id = "f1b5547c-6462-4ed3-b5cb-9a8c4f8eddb2"  # 请替换为实际的 D1 数据库 ID
+database_id = "df84619e-760c-4bc3-b5e5-c244d94e4616"  # 请替换为实际的 D1 数据库 ID
 
 [[r2_buckets]]
 binding = "R2_BUCKET"
